@@ -23,7 +23,7 @@ This guide covers deploying the Web Security Matrix to **Netlify** (frontend) an
 
 3. **Environment Variables:**
    ```
-   VITE_API_URL=https://your-render-app.onrender.com
+   VITE_API_URL=https://matrix-9s9s.onrender.com
    NODE_VERSION=18
    ```
 

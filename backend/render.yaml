@@ -8,7 +8,7 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: CORS_ORIGINS
-        value: https://your-netlify-app.netlify.app
+        value: https://your-netlify-site.netlify.app
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
