@@ -1,0 +1,9 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+requests==2.31.0
+beautifulsoup4==4.12.2
+cryptography==41.0.7
+python-whois==0.8.0
+dnspython==2.4.2
+python-multipart==0.0.6
+python-nmap==0.7.1
