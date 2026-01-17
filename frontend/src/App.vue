@@ -801,7 +801,7 @@ export default {
         // Create abort controller for request cancellation
         this.abortController = new AbortController();
 
-        const response = await fetch("http://localhost:8000/audit", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/audit`, {
           method: "POST",
           body: formData,
           signal: this.abortController.signal, // Enable request cancellation
