@@ -7,9 +7,7 @@
 [build.environment]
   # Node version
   NODE_VERSION = "18"
-
-# Environment variables for production
-[build.environment]
+  # API URL for production
   VITE_API_URL = "https://matrix-9s9s.onrender.com"
 
 # Headers for security and performance
