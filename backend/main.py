@@ -5,6 +5,7 @@ from intelligence import *
 from vulnerabilities import check_vulnerabilities, check_advanced_vulnerabilities
 from directories import *
 import re
+import os
 
 app = FastAPI(title="Web Security Audit API")
 
@@ -64,10 +65,17 @@ def validate_and_sanitize_url(url: str) -> str:
 
     return url
 
-# CORS middleware
+# CORS middleware - dynamically configured from environment
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+if cors_origins:
+    # Split by comma and strip whitespace for multiple origins
+    allowed_origins = [origin.strip() for origin in cors_origins.split(",")]
+else:
+    allowed_origins = ["http://localhost:5173"]  # fallback
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vue dev server
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
