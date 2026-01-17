@@ -62,8 +62,8 @@ A comprehensive web security audit framework featuring pure Python implementatio
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repository-url>
-   cd <your-project-directory>
+   git clone https://github.com/yourusername/web-security-matrix.git
+   cd web-security-matrix
    ```
 
 2. **Setup Backend:**
@@ -92,6 +92,14 @@ docker-compose up -d
 
 # Access at http://localhost:5173
 ```
+
+### **☁️ Cloud Deployment**
+
+For production deployment, see [DEPLOYMENT.md](DEPLOYMENT.md) for:
+- **Netlify** frontend deployment
+- **Render** backend deployment
+- **Environment configuration**
+- **Security setup**
 
 ## 🎯 **Usage**
 
@@ -219,8 +227,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 **Support**
 
-- **Issues**: [GitHub Issues](<your-repository-url>/issues)
-- **Discussions**: [GitHub Discussions](<your-repository-url>/discussions)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/web-security-matrix/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/web-security-matrix/discussions)
 - **Documentation**: See [Contributing Guidelines](CONTRIBUTING.md)
 
 ---
