@@ -62,8 +62,8 @@ A comprehensive web security audit framework featuring pure Python implementatio
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/aboodmidani/matrix.git
-   cd matrix
+   git clone <your-repository-url>
+   cd <your-project-directory>
    ```
 
 2. **Setup Backend:**
@@ -219,9 +219,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 **Support**
 
-- **Issues**: [GitHub Issues](https://github.com/aboodmidani/matrix/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/aboodmidani/matrix/discussions)
-- **Email**: abood@example.com
+- **Issues**: [GitHub Issues](<your-repository-url>/issues)
+- **Discussions**: [GitHub Discussions](<your-repository-url>/discussions)
+- **Documentation**: See [Contributing Guidelines](CONTRIBUTING.md)
 
 ---
 
