@@ -15,14 +15,14 @@ from scans.technology_scan import scan_technologies
 from scans.firewall_scan import scan_firewall
 
 # Get CORS origins from environment variable
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,https://matrix-audit.netlify.app")
 
 app = FastAPI(title="Web Security Audit API")
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS.split(',') if CORS_ORIGINS else ["http://localhost:5173"],
+    allow_origins=CORS_ORIGINS.split(',') if CORS_ORIGINS else ["http://localhost:5173", "https://matrix-audit.netlify.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
