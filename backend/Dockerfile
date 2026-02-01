@@ -9,6 +9,8 @@ ENV ENVIRONMENT=production
 RUN apt-get update && apt-get install -y \
     nmap \
     curl \
+    python3-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory

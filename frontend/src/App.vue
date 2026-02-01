@@ -945,7 +945,7 @@ export default {
         // Start dynamic progress simulation
         this.simulateScanProgress();
 
-        const response = await fetch("http://localhost:8000/audit", {
+        const response = await fetch("http://localhost:8001/audit", {
           method: "POST",
           body: formData,
         });
@@ -1016,7 +1016,7 @@ export default {
       if (!this.results) return;
 
       try {
-        const response = await fetch("http://localhost:8000/download-results", {
+        const response = await fetch("http://localhost:8001/download-results", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

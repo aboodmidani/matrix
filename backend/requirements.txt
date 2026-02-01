@@ -1,3 +1,5 @@
 fastapi==0.104.1
 uvicorn==0.24.0
 requests==2.31.0
+wappalyzer==1.0.20
+wafw00f==2.4.2
