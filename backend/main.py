@@ -13,7 +13,7 @@ from scans.directory_scan import run_dirsearch_scan
 from scans.vulnerability_scan import run_nikto_scan
 
 # Get CORS origins from environment variable
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS")
 
 app = FastAPI(title="Web Security Audit API")
 
