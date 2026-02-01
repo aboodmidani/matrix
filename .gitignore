@@ -164,7 +164,6 @@ temp/
 *.sqlite3
 
 # Scan results and temporary data
-scans/
 results/
 temp/
 
