@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile-specific responsive styles */
+@media (max-width: 640px) {
+  /* Reduce matrix rain intensity on mobile for performance */
+  #matrix-canvas {
+    opacity: 0.1 !important;
+  }
+
+  /* Adjust modal positioning for mobile */
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+
+  /* Touch-friendly button sizes */
+  .touch-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better spacing for mobile cards */
+  .mobile-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Responsive text scaling */
+  .responsive-text {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  /* Improved touch targets */
+  button,
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better form inputs on mobile */
+  input[type="text"],
+  input[type="url"] {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 16px;
+  }
+
+  /* Improved checkbox and radio button sizes */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+  }
+
+  /* Better modal overlays */
+  .modal-overlay {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 475px) {
+  /* Extra small screens */
+  .xs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .xs-text {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .xs-padding {
+    padding: 0.5rem;
+  }
+
+  /* Stack everything vertically on very small screens */
+  .xs-stack {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.05ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.05ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .matrix-bg {
+    background: #000;
+    opacity: 0.9;
+  }
+
+  #matrix-canvas {
+    opacity: 0.05 !important;
+  }
+}
+
+/* Dark mode improvements (already dark, but ensure consistency) */
+@media (prefers-color-scheme: dark) {
+  /* Already optimized for dark mode */
+}
+
+/* Print styles */
+@media print {
+  #matrix-canvas {
+    display: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
