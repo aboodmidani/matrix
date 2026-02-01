@@ -11,16 +11,18 @@ from scans.dns_scan import run_dnsrecon
 from scans.port_scan import run_nmap_scan
 from scans.directory_scan import run_dirsearch_scan
 from scans.vulnerability_scan import run_nikto_scan
+from scans.technology_scan import scan_technologies
+from scans.firewall_scan import scan_firewall
 
 # Get CORS origins from environment variable
-CORS_ORIGINS = os.getenv("CORS_ORIGINS")
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173")
 
 app = FastAPI(title="Web Security Audit API")
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=CORS_ORIGINS.split(',') if CORS_ORIGINS else ["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,6 +60,8 @@ async def audit_website(request: Request):
     # Get scan options
     enable_dns = data.get('enable_dns', 'false') == 'true'
     enable_ports = data.get('enable_ports', 'false') == 'true'
+    enable_technologies = data.get('enable_technologies', 'false') == 'true'
+    enable_firewall = data.get('enable_firewall', 'false') == 'true'
     enable_vulns = data.get('enable_vulns', 'false') == 'true'
     enable_directories = data.get('enable_directories', 'false') == 'true'
     wordlist = data.get('wordlist', 'common')
@@ -83,7 +87,11 @@ async def audit_website(request: Request):
         if enable_ports:
             try:
                 port_result = run_nmap_scan(domain)
-                results["ports"] = port_result
+                # Only add to results if there are actual ports or errors
+                if port_result and not (len(port_result) == 1 and 'error' in port_result[0]):
+                    results["ports"] = port_result
+                else:
+                    results["ports"] = port_result
             except Exception as e:
                 results["ports"] = [{"error": f"Port scan failed: {str(e)}"}]
         
@@ -102,6 +110,34 @@ async def audit_website(request: Request):
                 results["vulnerabilities"] = vuln_result
             except Exception as e:
                 results["vulnerabilities"] = [{"error": f"Vulnerability scan failed: {str(e)}"}]
+        
+        # Technology Scan (Manual)
+        if enable_technologies:
+            try:
+                tech_result = scan_technologies(url)
+                # Only add to results if there are actual technologies or errors
+                if tech_result and not (tech_result.get('technologies') == {} and 'error' not in tech_result):
+                    results["technologies"] = tech_result
+                else:
+                    results["technologies"] = tech_result
+            except Exception as e:
+                results["technologies"] = {"error": f"Technology scan failed: {str(e)}"}
+        else:
+            results["technologies"] = {"error": "Technology scan disabled"}
+        
+        # Firewall Scan (Manual)
+        if enable_firewall:
+            try:
+                firewall_result = scan_firewall(url)
+                # Only add to results if there are actual results or errors
+                if firewall_result and not (firewall_result.get('waf_detection', {}).get('detected') == False and 'error' not in firewall_result):
+                    results["firewall"] = firewall_result
+                else:
+                    results["firewall"] = firewall_result
+            except Exception as e:
+                results["firewall"] = {"error": f"Firewall scan failed: {str(e)}"}
+        else:
+            results["firewall"] = {"error": "Firewall scan disabled"}
         
         return results
         
@@ -217,6 +253,35 @@ VULNERABILITY SCAN RESULTS
             report += f"Vulnerability Scan Error: {vulnerabilities[0]['error']}\n"
         else:
             report += "No vulnerabilities detected.\n"
+    
+    if scan_type in ['all', 'technologies'] and 'technologies' in results:
+        report += f"""
+TECHNOLOGY DETECTION RESULTS
+{'-'*40}
+"""
+        technologies = results['technologies']
+        if 'technologies' in technologies and technologies['technologies']:
+            for tech in technologies['technologies']:
+                report += f"{tech['name']} ({tech['confidence']})\n"
+        elif 'error' in technologies:
+            report += f"Technology Scan Error: {technologies['error']}\n"
+        else:
+            report += "No technologies detected.\n"
+    
+    if scan_type in ['all', 'firewall'] and 'firewall' in results:
+        report += f"""
+FIREWALL DETECTION RESULTS
+{'-'*40}
+"""
+        firewall = results['firewall']
+        if 'waf_detection' in firewall:
+            waf = firewall['waf_detection']
+            if waf['detected']:
+                report += f"WAF Detected: {waf['waf_name']} ({waf['confidence']})\n"
+            else:
+                report += f"No WAF detected ({waf['confidence']})\n"
+        elif 'error' in firewall:
+            report += f"Firewall Scan Error: {firewall['error']}\n"
     
     report += f"""
 {'='*80}

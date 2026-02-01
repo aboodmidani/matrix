@@ -47,4 +47,8 @@ def parse_nmap_output(output: str) -> List[Dict[str, Any]]:
                 }
                 ports.append(port_data)
     
+    # If no ports found, return empty list instead of error
+    if not ports:
+        return []
+    
     return ports
