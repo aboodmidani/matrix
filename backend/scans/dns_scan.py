@@ -5,6 +5,18 @@ from typing import Dict, List, Any
 def run_dnsrecon(domain: str) -> Dict[str, Any]:
     """Run dnsrecon command to get DNS information"""
     try:
+        # Check if dnsrecon is available
+        check_result = subprocess.run(
+            ['which', 'dnsrecon'],
+            capture_output=True,
+            text=True
+        )
+        
+        if check_result.returncode != 0:
+            return {
+                "error": "DNS scanning tool (dnsrecon) not available in this environment. Please use a platform that supports system packages or configure dnsrecon manually."
+            }
+        
         result = subprocess.run(
             ['dnsrecon', '-d', domain, '-t', 'std'],
             capture_output=True,
@@ -20,12 +32,12 @@ def run_dnsrecon(domain: str) -> Dict[str, Any]:
             }
             return dns_info
         else:
-            return {"error": result.stderr}
+            return {"error": f"DNS scan failed: {result.stderr}"}
             
     except subprocess.TimeoutExpired:
         return {"error": "DNS lookup timed out"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"DNS scan error: {str(e)}"}
 
 def parse_dnsrecon_output(output: str) -> Dict[str, List[str]]:
     """Parse dnsrecon output to extract DNS records"""

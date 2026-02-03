@@ -3,3 +3,9 @@ uvicorn==0.24.0
 requests==2.31.0
 wappalyzer==1.0.20
 wafw00f==2.4.2
+python-multipart==0.0.9
+dnspython==2.7.0
+beautifulsoup4==4.13.4
+selenium==4.24.0
+tldextract==5.1.2
+huepy==1.2.1

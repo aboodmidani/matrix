@@ -4,6 +4,18 @@ from typing import Dict, List, Any
 def run_nmap_scan(domain: str) -> List[Dict[str, Any]]:
     """Run nmap command to scan open ports"""
     try:
+        # Check if nmap is available
+        check_result = subprocess.run(
+            ['which', 'nmap'],
+            capture_output=True,
+            text=True
+        )
+        
+        if check_result.returncode != 0:
+            return [{
+                "error": "Port scanning tool (nmap) not available in this environment. Please use a platform that supports system packages or configure nmap manually."
+            }]
+        
         # Scan common ports
         result = subprocess.run(
             ['nmap', '-sV', '--version-intensity', '2', '-p', '21,22,23,25,53,80,110,143,443,993,995,3306,5432', domain],
@@ -17,12 +29,12 @@ def run_nmap_scan(domain: str) -> List[Dict[str, Any]]:
             ports = parse_nmap_output(output)
             return ports
         else:
-            return [{"error": result.stderr}]
+            return [{"error": f"Port scan failed: {result.stderr}"}]
             
     except subprocess.TimeoutExpired:
         return [{"error": "Port scan timed out"}]
     except Exception as e:
-        return [{"error": str(e)}]
+        return [{"error": f"Port scan error: {str(e)}"}]
 
 def parse_nmap_output(output: str) -> List[Dict[str, Any]]:
     """Parse nmap output to extract open ports"""
