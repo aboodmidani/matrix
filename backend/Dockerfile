@@ -10,9 +10,13 @@ RUN apt-get update && apt-get install -y \
     nmap \
     curl \
     python3-dev \
+    python3-pip \
+    python3-venv \
     build-essential \
     git \
     wget \
+    firefox-esr \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dirsearch
