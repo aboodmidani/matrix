@@ -20,9 +20,15 @@ CORS_ORIGINS = os.getenv("CORS_ORIGINS")
 app = FastAPI(title="Web Security Audit API")
 
 # CORS middleware
+# Handle CORS origins properly - if not set, use default list
+if CORS_ORIGINS:
+    origins = [origin.strip() for origin in CORS_ORIGINS.split(',')]
+else:
+    origins = ["http://localhost:5173", "https://matrix-audit.netlify.app"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS.split(',') if CORS_ORIGINS else ["http://localhost:5173", "https://matrix-audit.netlify.app"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
