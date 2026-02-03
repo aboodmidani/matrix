@@ -945,7 +945,7 @@ export default {
         // Start dynamic progress simulation
         this.simulateScanProgress();
 
-        const response = await fetch(`${import.meta.env.CORS_ORIGINS}/audit`, {
+        const response = await fetch(`${__API_URL__}/audit`, {
           method: "POST",
           body: formData,
         });
@@ -1016,7 +1016,7 @@ export default {
       if (!this.results) return;
 
       try {
-        const response = await fetch(`${import.meta.env.CORS_ORIGINS}/download-results`, {
+        const response = await fetch(`${__API_URL__}/download-results`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
