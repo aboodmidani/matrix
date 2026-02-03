@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: matrix-backend
+    runtime: docker
+    repo: https://github.com/aboodmidani/matrix.git
+    branch: main
+    region: oregon
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    buildCommand: docker build -t matrix-backend ./backend
+    startCommand: docker run -p $PORT:8000 --env-file .env matrix-backend
+    healthCheckPath: /
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://matrix-audit.netlify.app
+      - key: ENVIRONMENT
+        value: production
