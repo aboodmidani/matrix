@@ -8,7 +8,7 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: CORS_ORIGINS
-        value: https://your-netlify-site.netlify.app  # Replace with your Netlify frontend URL
+        value: https://matrix-audit.netlify.app,https://*.netlify.app  # Replace with your Netlify frontend URL
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
