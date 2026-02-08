@@ -1,41 +1,30 @@
-import subprocess
 import re
 from typing import Dict, List, Any
+from tools import tool_manager
 
 def run_dnsrecon(domain: str) -> Dict[str, Any]:
     """Run dnsrecon command to get DNS information"""
     try:
         # Check if dnsrecon is available
-        check_result = subprocess.run(
-            ['which', 'dnsrecon'],
-            capture_output=True,
-            text=True
-        )
-        
-        if check_result.returncode != 0:
+        if not tool_manager.check_tool_availability('dnsrecon'):
             return {
                 "error": "DNS scanning tool (dnsrecon) not available in this environment. Please use a platform that supports system packages or configure dnsrecon manually."
             }
         
-        result = subprocess.run(
-            ['dnsrecon', '-d', domain, '-t', 'std'],
-            capture_output=True,
-            text=True,
-            timeout=60
+        # Run dnsrecon command
+        success, stdout, stderr = tool_manager.run_command(
+            ['dnsrecon', '-d', domain, '-t', 'std']
         )
         
-        if result.returncode == 0:
-            output = result.stdout
+        if success:
             dns_info = {
-                "raw_output": output,
-                "records": parse_dnsrecon_output(output)
+                "raw_output": stdout,
+                "records": parse_dnsrecon_output(stdout)
             }
             return dns_info
         else:
-            return {"error": f"DNS scan failed: {result.stderr}"}
+            return {"error": f"DNS scan failed: {stderr}"}
             
-    except subprocess.TimeoutExpired:
-        return {"error": "DNS lookup timed out"}
     except Exception as e:
         return {"error": f"DNS scan error: {str(e)}"}
 

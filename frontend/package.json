@@ -12,7 +12,8 @@
     "animate.css": "^4.1.1",
     "dotenv": "^17.2.3",
     "framer-motion": "^11.0.3",
-    "vue": "^3.4.0"
+    "vue": "^3.4.0",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

@@ -14,3 +14,5 @@ netaddr==1.2.1
 netifaces==0.11.0
 loguru==0.7.3
 stamina==25.2.0
+fastapi-limiter==0.2.0
+python-dotenv==1.1.1

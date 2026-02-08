@@ -1,0 +1,19 @@
+# Dirsearch started Fri Feb  6 23:51:55 2026 as: /usr/lib/python3/dist-packages/dirsearch/dirsearch.py -u https://codiay.com/ -w /usr/share/dirb/wordlists/common.txt -t 50
+
+403   199B   https://codiay.com/admin.cgi
+301   233B   https://codiay.com/assets    -> REDIRECTS TO: http://codiay.com/assets/
+403   199B   https://codiay.com/AT-admin.cgi
+403   199B   https://codiay.com/cachemgr.cgi
+301   234B   https://codiay.com/contact    -> REDIRECTS TO: http://codiay.com/contact/
+200    61KB  https://codiay.com/favicon.ico
+301   232B   https://codiay.com/icons    -> REDIRECTS TO: http://codiay.com/icons/
+301   232B   https://codiay.com/media    -> REDIRECTS TO: http://codiay.com/media/
+301   237B   https://codiay.com/phpMyAdmin    -> REDIRECTS TO: http://codiay.com/phpMyAdmin/
+301   237B   https://codiay.com/phpmyadmin    -> REDIRECTS TO: http://codiay.com/phpmyadmin/
+301   230B   https://codiay.com/pma    -> REDIRECTS TO: http://codiay.com/pma/
+200    23B   https://codiay.com/robots.txt
+401   381B   https://codiay.com/server-info
+401   381B   https://codiay.com/server-status
+301   234B   https://codiay.com/squirrelmail    -> REDIRECTS TO: http://codiay.com/webmail/
+301   231B   https://codiay.com/tech    -> REDIRECTS TO: http://codiay.com/tech/
+302   211B   https://codiay.com/webmail    -> REDIRECTS TO: https://codiay.com/webmail/
