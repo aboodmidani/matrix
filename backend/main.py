@@ -60,14 +60,13 @@ if settings.ENVIRONMENT == "production":
     # Production CORS - more restrictive
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "https://matrix-audit.netlify.app/",
-        ],
+        allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-API-Key"],
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-API-Key", "Accept", "Origin"],
+        allow_origin_regex=None,
         max_age=3600,
-        expose_headers=["Content-Disposition"]
+        expose_headers=["Content-Disposition", "Content-Type"]
     )
 else:
     # Development CORS - more permissive for local development
@@ -76,10 +75,10 @@ else:
         allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-API-Key"],
-        max_age=3600,
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-API-Key", "Accept", "Origin"],
         allow_origin_regex=r"https?://localhost:\d+",
-        expose_headers=["Content-Disposition"]
+        max_age=3600,
+        expose_headers=["Content-Disposition", "Content-Type"]
     )
 
 # Trusted host middleware for production
