@@ -1,95 +1,58 @@
-import re
-import socket
-from typing import Dict, List, Any
+from typing import Dict, Any
 from tools import tool_manager
 
 def run_dnsrecon(domain: str) -> Dict[str, Any]:
-    """Get DNS information with simple command"""
-    try:
-        # Check if dnsrecon is available
-        if not tool_manager.check_tool_availability('dnsrecon'):
-            # Fallback to Python DNS
-            return get_dns_python(domain)
-        
-        # Run simple dnsrecon command
-        success, stdout, stderr = tool_manager.run_command(
-            ['dnsrecon', '-d', domain, '-t', 'std', '--timeout', '30']
-        )
-        
-        if success:
-            records = parse_dnsrecon_simple(stdout)
-            return {
-                "raw_output": stdout,
-                "records": records
+    """Run dnsrecon command"""
+    if not tool_manager.check_tool_availability('dnsrecon'):
+        return {"error": "dnsrecon not available"}
+    
+    success, stdout, stderr = tool_manager.run_command(
+        ['dnsrecon', '-d', domain, '-t', 'std']
+    )
+    
+    if success:
+        return {
+            "raw_output": stdout,
+            "records": {
+                "A_records": extract_ips(stdout),
+                "MX_records": extract_mx(stdout),
+                "NS_records": extract_ns(stdout)
             }
-        else:
-            # Fallback to Python DNS
-            return get_dns_python(domain)
-            
-    except Exception as e:
-        return get_dns_python(domain)
+        }
+    else:
+        return {"error": stderr}
 
-def get_dns_python(domain: str) -> Dict[str, Any]:
-    """Fast Python DNS lookup"""
-    records = {
-        "A_records": [],
-        "AAAA_records": [],
-        "MX_records": [],
-        "NS_records": [],
-        "TXT_records": []
-    }
-    
-    try:
-        # A records
-        ip = socket.gethostbyname(domain)
-        records["A_records"].append(ip)
-    except:
-        pass
-    
-    return {
-        "raw_output": "DNS lookup completed",
-        "records": records
-    }
-
-def parse_dnsrecon_simple(output: str) -> Dict[str, List[str]]:
-    """Simple DNS parsing"""
-    records = {
-        "A_records": [],
-        "AAAA_records": [],
-        "MX_records": [],
-        "NS_records": [],
-        "TXT_records": []
-    }
-    
-    # Look for various formats
+def extract_ips(output: str) -> list:
+    """Extract IP addresses from output"""
+    import re
+    ips = []
     for line in output.split('\n'):
-        line = line.strip()
-        
-        # Simple IP extraction
-        if 'A' in line and not 'AAAA' in line:
-            ip_match = re.search(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', line)
-            if ip_match and '127.0.0.1' not in line:
-                if ip_match.group(1) not in records["A_records"]:
-                    records["A_records"].append(ip_match.group(1))
-        
-        # MX records
-        if 'MX' in line:
-            mx_match = re.search(r'([a-zA-Z0-9.-]+\.[a-zA-Z]+)', line)
-            if mx_match:
-                mx = mx_match.group(1)
-                if mx not in records["MX_records"] and '@' not in mx:
-                    records["MX_records"].append(mx)
-        
-        # NS records
-        if 'NS' in line and 'TXT' not in line:
-            ns_match = re.search(r'([a-zA-Z0-9.-]+\.[a-zA-Z]+)', line)
-            if ns_match:
-                ns = ns_match.group(1)
-                if ns not in records["NS_records"] and '@' not in ns:
-                    records["NS_records"].append(ns)
-    
-    return records
+        match = re.search(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', line)
+        if match and match.group(1) != '127.0.0.1':
+            if match.group(1) not in ips:
+                ips.append(match.group(1))
+    return ips
 
-def parse_dnsrecon_output(output: str) -> Dict[str, List[str]]:
-    """Parse dnsrecon output"""
-    return parse_dnsrecon_simple(output)
+def extract_mx(output: str) -> list:
+    """Extract MX records from output"""
+    import re
+    mx = []
+    for line in output.split('\n'):
+        if 'MX' in line:
+            match = re.search(r'([a-zA-Z0-9.-]+\.[a-zA-Z]+)', line)
+            if match and '@' not in match.group(1):
+                if match.group(1) not in mx:
+                    mx.append(match.group(1))
+    return mx
+
+def extract_ns(output: str) -> list:
+    """Extract NS records from output"""
+    import re
+    ns = []
+    for line in output.split('\n'):
+        if ' NS ' in line or '\tNS' in line:
+            match = re.search(r'([a-zA-Z0-9.-]+\.[a-zA-Z]+)', line)
+            if match and '@' not in match.group(1):
+                if match.group(1) not in ns:
+                    ns.append(match.group(1))
+    return ns

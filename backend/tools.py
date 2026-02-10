@@ -39,6 +39,11 @@ class ToolManager:
                 'command': 'wafw00f',
                 'required': False,
                 'description': 'WAF detection tool'
+            },
+            'subfinder': {
+                'command': 'subfinder',
+                'required': False,
+                'description': 'Subdomain discovery tool'
             }
         }
     
