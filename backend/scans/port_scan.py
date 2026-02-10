@@ -1,84 +1,93 @@
+import socket
 from typing import Dict, List, Any
 from tools import tool_manager
 
+COMMON_PORTS = [21, 22, 25, 53, 80, 110, 143, 443, 993, 995, 3306, 5432, 8080]
+
+SERVICE_NAMES = {
+    21: 'ftp', 22: 'ssh', 25: 'smtp', 53: 'dns',
+    80: 'http', 110: 'pop3', 143: 'imap', 443: 'https',
+    993: 'imaps', 995: 'pop3s', 3306: 'mysql', 5432: 'postgresql',
+    8080: 'http-alt'
+}
+
 def run_nmap_scan(domain: str) -> List[Dict[str, Any]]:
-    """Run nmap command to scan open ports"""
+    """Fast port scan with simple nmap command"""
     try:
         # Check if nmap is available
         if not tool_manager.check_tool_availability('nmap'):
-            return [{
-                "error": "Port scanning tool (nmap) not available in this environment. Please use a platform that supports system packages or configure nmap manually."
-            }]
+            return port_scan_socket(domain)
         
-        # Scan common ports with specific range for faster results
+        # Run simple nmap command
         success, stdout, stderr = tool_manager.run_command([
-            'nmap', '-sV', '--version-intensity', '2',
-            '-p', '21,22,23,25,53,80,110,143,443,993,995,3306,5432',
-            domain
+            'nmap', '-p', '21,22,25,53,80,110,143,443,993,995,3306,5432,8080',
+            '--open', '-oG', '-', domain
         ])
         
         if success:
-            ports = parse_nmap_output(stdout)
-            return ports
+            ports = parse_nmap_simple(stdout)
+            if ports:
+                return ports
+            return port_scan_socket(domain)
         else:
-            return [{"error": f"Port scan failed: {stderr}"}]
+            return port_scan_socket(domain)
             
     except Exception as e:
-        return [{"error": f"Port scan error: {str(e)}"}]
+        return port_scan_socket(domain)
 
-def parse_nmap_output(output: str) -> List[Dict[str, Any]]:
-    """Parse nmap output to extract open ports"""
+def port_scan_socket(domain: str) -> List[Dict[str, Any]]:
+    """Fallback socket-based port scan"""
+    open_ports = []
+    try:
+        ip = socket.gethostbyname(domain)
+    except:
+        return [{"error": f"Could not resolve: {domain}"}]
+    
+    for port in COMMON_PORTS:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex((ip, port))
+            sock.close()
+            if result == 0:
+                open_ports.append({
+                    "port": port,
+                    "protocol": "tcp",
+                    "service": SERVICE_NAMES.get(port, 'unknown'),
+                    "state": "open"
+                })
+        except:
+            continue
+    
+    return open_ports
+
+def parse_nmap_simple(output: str) -> List[Dict[str, Any]]:
+    """Simple nmap parsing"""
     ports = []
     
-    lines = output.split('\n')
-    for line in lines:
-        if '/tcp' in line and 'open' in line:
-            # Parse line like: "80/tcp   open  http    nginx 1.18.0"
-            # Or: "22/tcp   open  ssh"
-            parts = line.split()
-            if len(parts) >= 3:
-                port_info = parts[0].split('/')
-                port = port_info[0]
-                protocol = port_info[1] if len(port_info) > 1 else 'tcp'
-                
-                # Find the service name (usually the 3rd field)
-                service = 'unknown'
-                for i, part in enumerate(parts):
-                    if i >= 2 and part not in ['open', 'closed', 'filtered']:
-                        service = part
-                        break
-                
-                port_data = {
-                    "port": int(port),
-                    "protocol": protocol,
-                    "service": service,
-                    "state": "open"
-                }
-                ports.append(port_data)
-        elif '/udp' in line and 'open' in line:
-            # Parse UDP ports similarly
-            parts = line.split()
-            if len(parts) >= 3:
-                port_info = parts[0].split('/')
-                port = port_info[0]
-                protocol = port_info[1] if len(port_info) > 1 else 'udp'
-                
-                service = 'unknown'
-                for i, part in enumerate(parts):
-                    if i >= 2 and part not in ['open', 'closed', 'filtered']:
-                        service = part
-                        break
-                
-                port_data = {
-                    "port": int(port),
-                    "protocol": protocol,
-                    "service": service,
-                    "state": "open"
-                }
-                ports.append(port_data)
-    
-    # If no ports found, return empty list instead of error
-    if not ports:
-        return []
+    # Parse nmap -oG format: Host: 1.2.3.4 ()  Ports: 80/open/tcp//http//
+    for line in output.split('\n'):
+        if 'Ports:' in line:
+            port_parts = line.split('Ports:')[1].split(',')
+            for part in port_parts:
+                part = part.strip()
+                if '/open/' in part:
+                    # Extract port
+                    port_match = part.split('/')[0]
+                    try:
+                        port = int(port_match)
+                        service = SERVICE_NAMES.get(port, 'unknown')
+                        ports.append({
+                            "port": port,
+                            "protocol": "tcp",
+                            "service": service,
+                            "state": "open"
+                        })
+                    except:
+                        continue
     
     return ports
+
+def parse_nmap_output(output: str) -> List[Dict[str, Any]]:
+    """Parse nmap output"""
+    return parse_nmap_simple(output)
