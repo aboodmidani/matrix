@@ -23,7 +23,7 @@ class Settings:
     ]
     
     # Tool Configuration
-    SCAN_TIMEOUT: int = int(os.getenv("SCAN_TIMEOUT", "120"))
+    SCAN_TIMEOUT: int = int(os.getenv("SCAN_TIMEOUT", "300"))
     
     # Default wordlists for directory scanning - use common wordlist locations
     # On Linux: /usr/share/wordlists, /usr/share/dirb/wordlists
