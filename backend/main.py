@@ -27,8 +27,6 @@ from security import (
 )
 
 # Import scan functions
-from scans.directory_scan import run_dirsearch_scan
-from scans.vulnerability_scan import run_nikto_scan
 from scans.technology_scan import scan_technologies
 from scans.firewall_scan import scan_firewall
 from scans.dns_scan import run_dnsrecon
@@ -214,21 +212,6 @@ async def audit_website(request: Request):
                 logger.error(f"Port scan failed for {domain}: {e}")
                 results["results"]["ports"] = [{"error": f"Port scan failed: {str(e)}"}]
         
-        if scan_options['enable_directories']:
-            try:
-                dir_result = run_dirsearch_scan(url, scan_options['wordlist'])
-                results["results"]["directories"] = dir_result
-            except Exception as e:
-                logger.error(f"Directory scan failed for {url}: {e}")
-                results["results"]["directories"] = [{"error": f"Directory scan failed: {str(e)}"}]
-        
-        if scan_options['enable_vulnerabilities']:
-            try:
-                vuln_result = run_nikto_scan(url)
-                results["results"]["vulnerabilities"] = vuln_result
-            except Exception as e:
-                logger.error(f"Vulnerability scan failed for {url}: {e}")
-                results["results"]["vulnerabilities"] = [{"error": f"Vulnerability scan failed: {str(e)}"}]
         
         if scan_options['enable_technologies']:
             try:
