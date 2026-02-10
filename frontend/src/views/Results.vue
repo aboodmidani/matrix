@@ -336,8 +336,8 @@
         <div class="text-green-400 font-mono text-lg mb-2">[NO SCAN RESULTS AVAILABLE]</div>
         <div class="text-green-300 font-mono text-sm">Please run scans from the individual scan modules to view results here.</div>
         <div class="mt-4">
-          <router-link to="/directory-scan" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-black font-mono text-sm font-bold rounded border border-blue-400 transition-all duration-300 mr-2">[RUN DIRECTORY SCAN]</router-link>
-          <router-link to="/vulnerability-scan" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-mono text-sm font-bold rounded border border-red-400 transition-all duration-300">[RUN VULNERABILITY SCAN]</router-link>
+          <router-link to="/port-scan" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 text-black font-mono text-sm font-bold rounded border border-yellow-400 transition-all duration-300 mr-2">[RUN PORT SCAN]</router-link>
+          <router-link to="/technology-scan" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-black font-mono text-sm font-bold rounded border border-purple-400 transition-all duration-300">[RUN TECHNOLOGY SCAN]</router-link>
         </div>
       </div>
     </div>
