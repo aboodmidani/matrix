@@ -1,28 +1,37 @@
+import socket
+import dns.resolver
 from typing import Dict, List, Any
 from tools import tool_manager
 
+# Common subdomains to check
+COMMON_SUBDOMAINS = [
+    'www', 'mail', 'ftp', 'admin', 'test', 'dev', 'staging', 'api',
+    'blog', 'shop', 'store', 'support', 'help', 'docs', 'wiki',
+    'portal', 'cloud', 'app', 'm', 'mobile', 'cdn', 'static',
+    'images', 'img', 'assets', 'files', 'download', 'upload',
+    'vpn', 'ssh', 'remote', 'manager', 'cpanel', 'whm', 'phpmyadmin',
+    'monitoring', 'metrics', 'logs', 'grafana', 'prometheus', 'jenkins',
+    'gitlab', 'github', 'bitbucket', 'docker', 'kube', 'k8s'
+]
+
 def run_subfinder_scan(domain: str) -> List[Dict[str, Any]]:
-    """Run subfinder command to discover subdomains"""
-    try:
-        # Check if subfinder is available
-        if not tool_manager.check_tool_availability('subfinder'):
-            return [{
-                "error": "Subdomain discovery tool (subfinder) not available in this environment. Please install subfinder or use a platform that supports it."
-            }]
-        
-        # Run subfinder command
-        success, stdout, stderr = tool_manager.run_command([
-            'subfinder', '-d', domain, '-silent'
-        ])
-        
-        if success:
-            subdomains = parse_subfinder_output(stdout)
-            return subdomains
-        else:
-            return [{"error": f"Subdomain scan failed: {stderr}"}]
-            
-    except Exception as e:
-        return [{"error": f"Subdomain scan error: {str(e)}"}]
+    """Fast subdomain discovery using DNS"""
+    subdomains = []
+    
+    for sub in COMMON_SUBDOMAINS:
+        try:
+            full_domain = f"{sub}.{domain}"
+            # Try to resolve the subdomain
+            dns.resolver.resolve(full_domain, 'A', lifetime=2)
+            subdomains.append({
+                "subdomain": full_domain,
+                "discovered": True,
+                "source": "dns-lookup"
+            })
+        except Exception:
+            continue
+    
+    return subdomains
 
 def parse_subfinder_output(output: str) -> List[Dict[str, Any]]:
     """Parse subfinder output to extract discovered subdomains"""
@@ -38,9 +47,5 @@ def parse_subfinder_output(output: str) -> List[Dict[str, Any]]:
                 "source": "subfinder"
             }
             subdomains.append(subdomain_data)
-    
-    # If no subdomains found, return empty list instead of error
-    if not subdomains:
-        return []
     
     return subdomains
