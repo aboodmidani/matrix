@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from tools import tool_manager
+import re
 
 def run_dnsrecon(domain: str) -> Dict[str, Any]:
     """Run dnsrecon command"""
@@ -14,45 +15,28 @@ def run_dnsrecon(domain: str) -> Dict[str, Any]:
         return {
             "raw_output": stdout,
             "records": {
-                "A_records": extract_ips(stdout),
-                "MX_records": extract_mx(stdout),
-                "NS_records": extract_ns(stdout)
+                "A_records": find_all_ips(stdout),
+                "MX_records": find_all_domains(stdout),
+                "NS_records": find_all_domains(stdout)
             }
         }
     else:
-        return {"error": stderr}
+        return {"error": stderr, "raw_output": stdout}
 
-def extract_ips(output: str) -> list:
-    """Extract IP addresses from output"""
-    import re
-    ips = []
-    for line in output.split('\n'):
-        match = re.search(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', line)
-        if match and match.group(1) != '127.0.0.1':
-            if match.group(1) not in ips:
-                ips.append(match.group(1))
-    return ips
+def find_all_ips(text: str) -> list:
+    """Find all IP addresses"""
+    ips = set()
+    for match in re.finditer(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', text):
+        ip = match.group(1)
+        if not ip.startswith('127.') and not ip.startswith('0.'):
+            ips.add(ip)
+    return list(ips)
 
-def extract_mx(output: str) -> list:
-    """Extract MX records from output"""
-    import re
-    mx = []
-    for line in output.split('\n'):
-        if 'MX' in line:
-            match = re.search(r'([a-zA-Z0-9.-]+\.[a-zA-Z]+)', line)
-            if match and '@' not in match.group(1):
-                if match.group(1) not in mx:
-                    mx.append(match.group(1))
-    return mx
-
-def extract_ns(output: str) -> list:
-    """Extract NS records from output"""
-    import re
-    ns = []
-    for line in output.split('\n'):
-        if ' NS ' in line or '\tNS' in line:
-            match = re.search(r'([a-zA-Z0-9.-]+\.[a-zA-Z]+)', line)
-            if match and '@' not in match.group(1):
-                if match.group(1) not in ns:
-                    ns.append(match.group(1))
-    return ns
+def find_all_domains(text: str) -> list:
+    """Find all domain-like patterns"""
+    domains = set()
+    for match in re.finditer(r'([a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,})', text):
+        d = match.group(1)
+        if '@' not in d and d not in domains:
+            domains.add(d)
+    return list(domains)

@@ -11,27 +11,33 @@ def run_nmap_scan(domain: str) -> List[Dict[str, Any]]:
     ])
     
     if success:
-        return parse_ports(stdout)
+        return find_open_ports(stdout)
     else:
-        return [{"error": stderr}]
+        return [{"error": stderr, "raw_output": stdout}]
 
-def parse_ports(output: str) -> List[Dict[str, Any]]:
-    """Parse nmap output"""
+def find_open_ports(text: str) -> List[Dict[str, Any]]:
+    """Find all open ports from nmap output"""
     ports = []
-    for line in output.split('\n'):
-        if '/tcp' in line and 'open' in line:
-            parts = line.split()
-            port_info = parts[0].split('/')
-            port = int(port_info[0])
-            service = 'unknown'
-            for part in parts[2:]:
-                if part not in ['open', 'tcp', 'udp']:
-                    service = part
-                    break
-            ports.append({
-                "port": port,
-                "protocol": "tcp",
-                "service": service,
-                "state": "open"
-            })
+    text_lower = text.lower()
+    
+    # Common services
+    services = {
+        '80': 'http', '443': 'https', '22': 'ssh', '21': 'ftp',
+        '25': 'smtp', '53': 'dns', '110': 'pop3', '143': 'imap',
+        '993': 'imap', '995': 'pop3', '3306': 'mysql', '5432': 'postgresql'
+    }
+    
+    # Look for port patterns like "80/tcp" or "PORT   STATE SERVICE"
+    for match in re.finditer(r'(\d+)/tcp', text_lower):
+        port = int(match.group(1))
+        service = services.get(str(port), 'unknown')
+        ports.append({
+            "port": port,
+            "protocol": "tcp",
+            "service": service,
+            "state": "open"
+        })
+    
     return ports
+
+import re
