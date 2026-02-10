@@ -2,7 +2,9 @@ import subprocess
 import json
 import tempfile
 import os
+import platform
 import logging
+import shutil
 from typing import Dict, List, Any, Optional, Tuple
 from config import settings
 
@@ -43,16 +45,25 @@ class ToolManager:
     def check_tool_availability(self, tool_name: str) -> bool:
         """Check if a tool is available in the system"""
         try:
-            result = subprocess.run(
-                ['which', self.tools[tool_name]['command']],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            return result.returncode == 0
+            tool_cmd = self.tools[tool_name]['command']
+            # Use shutil.which for cross-platform compatibility
+            # On Windows, it looks for .exe, .bat, .cmd files
+            # On Linux/macOS, it looks in PATH
+            result = shutil.which(tool_cmd)
+            if result:
+                logger.info(f"Tool '{tool_name}' found at: {result}")
+                return True
+            else:
+                logger.warning(f"Tool '{tool_name}' not found in PATH")
+                return False
         except Exception as e:
             logger.warning(f"Failed to check {tool_name} availability: {e}")
             return False
+    
+    def get_temp_path(self, filename: str) -> str:
+        """Get platform-independent temporary file path"""
+        temp_dir = tempfile.gettempdir()
+        return os.path.join(temp_dir, filename)
     
     def run_command(self, command: List[str], timeout: Optional[int] = None) -> Tuple[bool, str, str]:
         """

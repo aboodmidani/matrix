@@ -1,4 +1,6 @@
 import subprocess
+import tempfile
+import os
 from typing import Dict, List, Any
 from tools import tool_manager
 from config import settings
@@ -15,9 +17,12 @@ def run_dirsearch_scan(url: str, wordlist: str = "common") -> List[Dict[str, Any
         # Map wordlist names to actual file paths
         wordlist_path = settings.WORDLISTS.get(wordlist, settings.WORDLISTS["common"])
         
+        # Use platform-independent temp path
+        temp_output_path = tool_manager.get_temp_path("dirsearch_results.txt")
+        
         success, stdout, stderr = tool_manager.run_command([
             'dirsearch', '-u', url, '-w', wordlist_path, '-t', '50', 
-            '-o', '/tmp/dirsearch_results.txt'
+            '-o', temp_output_path
         ])
         
         if success:

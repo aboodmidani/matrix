@@ -25,12 +25,14 @@ class Settings:
     # Tool Configuration
     SCAN_TIMEOUT: int = int(os.getenv("SCAN_TIMEOUT", "120"))
     
-    # Default wordlists for directory scanning
+    # Default wordlists for directory scanning - use common wordlist locations
+    # On Linux: /usr/share/wordlists, /usr/share/dirb/wordlists
+    # On other systems, the scan will check availability and use dirsearch built-in wordlists
     WORDLISTS: dict = {
-        "common": "/usr/share/dirb/wordlists/common.txt",
-        "fast": "/usr/share/dirb/wordlists/small.txt", 
-        "big": "/usr/share/dirb/wordlists/big.txt",
-        "all": "/usr/share/dirb/wordlists/vulns/cgis.txt"
+        "common": "/usr/share/wordlists/dirb/common.txt",
+        "fast": "/usr/share/wordlists/dirb/small.txt", 
+        "big": "/usr/share/wordlists/dirb/big.txt",
+        "all": "/usr/share/wordlists/dirb/vulns/cgis.txt"
     }
 
 # Create settings instance

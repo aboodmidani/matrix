@@ -265,15 +265,26 @@ async def scan_dns(request: Request):
         # Use the proper scan function
         result = run_dnsrecon(domain)
         
-        # Format response for frontend
+        # Format response for frontend with all dynamic text
         if 'error' in result:
             return {
                 "success": False,
                 "url": url,
                 "domain": domain,
                 "scan_type": "dns",
-                "command": "dnsrecon",
+                "tool_name": "dnsrecon",
+                "tool_description": "DNS reconnaissance and enumeration tool",
+                "command": "dnsrecon -d {domain} -t std".format(domain=domain),
+                "command_example": "dnsrecon -d example.com -t std",
                 "output": "",
+                "records": {},
+                "message": {
+                    "title": "DNS SCAN RESULT",
+                    "success_title": "DNS RECONNAISSANCE COMPLETED",
+                    "error_title": "DNS SCAN FAILED",
+                    "no_records": "No DNS records found",
+                    "processing": "Analyzing DNS records for {domain}".format(domain=domain)
+                },
                 "error": result['error']
             }
         
@@ -282,9 +293,24 @@ async def scan_dns(request: Request):
             "url": url,
             "domain": domain,
             "scan_type": "dns",
-            "command": "dnsrecon",
+            "tool_name": "dnsrecon",
+            "tool_description": "DNS reconnaissance and enumeration tool",
+            "command": "dnsrecon -d {domain} -t std".format(domain=domain),
+            "command_example": "dnsrecon -d example.com -t std",
             "output": result.get('raw_output', ''),
             "records": result.get('records', {}),
+            "message": {
+                "title": "DNS SCAN RESULT",
+                "success_title": "DNS RECONNAISSANCE COMPLETED",
+                "error_title": "DNS SCAN FAILED",
+                "no_records": "No DNS records found",
+                "processing": "Analyzing DNS records for {domain}".format(domain=domain),
+                "a_records": "A Records (IPv4 Addresses)",
+                "aaaa_records": "AAAA Records (IPv6 Addresses)",
+                "mx_records": "MX Records (Mail Servers)",
+                "ns_records": "NS Records (Name Servers)",
+                "txt_records": "TXT Records"
+            },
             "error": None
         }
     except Exception as e:
@@ -302,31 +328,60 @@ async def scan_ports(request: Request):
         # Use the proper scan function
         result = run_nmap_scan(domain)
         
-        # Format response for frontend
+        # Format response for frontend with all dynamic text
         if result and len(result) > 0 and 'error' in result[0]:
             return {
                 "success": False,
                 "url": url,
                 "domain": domain,
                 "scan_type": "ports",
-                "command": "nmap",
+                "tool_name": "nmap",
+                "tool_description": "Network mapper - port scanner and service detection tool",
+                "command": "nmap -sV --version-intensity 2 -p 21,22,23,25,53,80,110,143,443,993,995,3306,5432 {domain}".format(domain=domain),
+                "command_example": "nmap -sV -p 80,443 example.com",
                 "output": "",
+                "ports": [],
+                "message": {
+                    "title": "PORT SCAN RESULT",
+                    "success_title": "PORT SCAN COMPLETED",
+                    "error_title": "PORT SCAN FAILED",
+                    "no_ports": "No open ports found",
+                    "processing": "Scanning target for open ports...",
+                    "scanned_ports": "Scanned {count} common ports".format(count=len(result))
+                },
                 "error": result[0]['error']
             }
         
         # Format ports for display
         port_list = []
         for port in result:
-            port_list.append(f"Port {port['port']}/{port['protocol']}: {port['service']} ({port['state']})")
+            port_list.append("Port {port}/{protocol}: {service} ({state})".format(
+                port=port['port'], 
+                protocol=port['protocol'], 
+                service=port['service'], 
+                state=port['state']
+            ))
         
         return {
             "success": True,
             "url": url,
             "domain": domain,
             "scan_type": "ports",
-            "command": "nmap",
+            "tool_name": "nmap",
+            "tool_description": "Network mapper - port scanner and service detection tool",
+            "command": "nmap -sV --version-intensity 2 -p 21,22,23,25,53,80,110,143,443,993,995,3306,5432 {domain}".format(domain=domain),
+            "command_example": "nmap -sV -p 80,443 example.com",
             "output": "\n".join(port_list) if port_list else "No open ports found",
             "ports": result,
+            "message": {
+                "title": "PORT SCAN RESULT",
+                "success_title": "PORT SCAN COMPLETED",
+                "error_title": "PORT SCAN FAILED",
+                "no_ports": "No open ports found",
+                "processing": "Scanning target for open ports...",
+                "scanned_ports": "Scanned {count} common ports".format(count=len(result)),
+                "open_ports_found": "{count} open ports detected".format(count=len(port_list))
+            },
             "error": None
         }
     except Exception as e:
@@ -344,14 +399,26 @@ async def scan_directories(request: Request):
         # Use the proper scan function
         result = run_dirsearch_scan(url, wordlist)
         
-        # Format response for frontend
+        # Format response for frontend with all dynamic text
         if result and len(result) > 0 and 'error' in result[0]:
             return {
                 "success": False,
                 "url": url,
                 "scan_type": "directories",
-                "command": "dirsearch",
+                "tool_name": "dirsearch",
+                "tool_description": "Web path scanner - directory and file enumeration tool",
+                "command": "dirsearch -u {url} -w {wordlist}".format(url=url, wordlist=wordlist),
+                "command_example": "dirsearch -u https://example.com -w common.txt",
                 "output": "",
+                "directories": [],
+                "message": {
+                    "title": "DIRECTORY SCAN RESULT",
+                    "success_title": "DIRECTORY SCAN COMPLETED",
+                    "error_title": "DIRECTORY SCAN FAILED",
+                    "no_dirs": "No directories found",
+                    "processing": "Scanning target for hidden directories...",
+                    "found_dirs": "{count} directories found".format(count=len(result))
+                },
                 "error": result[0]['error']
             }
         
@@ -359,15 +426,30 @@ async def scan_directories(request: Request):
         dir_list = []
         for dir_entry in result:
             if dir_entry.get('found'):
-                dir_list.append(f"{dir_entry['url']} (Status: {dir_entry['status_code']}, Size: {dir_entry.get('size', 'N/A')})")
+                dir_list.append("{url} (Status: {status}, Size: {size})".format(
+                    url=dir_entry['url'],
+                    status=dir_entry['status_code'],
+                    size=dir_entry.get('size', 'N/A')
+                ))
         
         return {
             "success": True,
             "url": url,
             "scan_type": "directories",
-            "command": "dirsearch",
+            "tool_name": "dirsearch",
+            "tool_description": "Web path scanner - directory and file enumeration tool",
+            "command": "dirsearch -u {url} -w {wordlist}".format(url=url, wordlist=wordlist),
+            "command_example": "dirsearch -u https://example.com -w common.txt",
             "output": "\n".join(dir_list) if dir_list else "No directories found",
             "directories": result,
+            "message": {
+                "title": "DIRECTORY SCAN RESULT",
+                "success_title": "DIRECTORY SCAN COMPLETED",
+                "error_title": "DIRECTORY SCAN FAILED",
+                "no_dirs": "No directories found",
+                "processing": "Scanning target for hidden directories...",
+                "found_dirs": "{count} directories found".format(count=len(dir_list))
+            },
             "error": None
         }
     except Exception as e:
@@ -385,13 +467,25 @@ async def scan_vulnerabilities(request: Request):
         result = run_nikto_scan(url)
         
         # Format the result to match expected frontend structure
-        if result and 'error' in result[0] if result else {}:
+        if result and len(result) > 0 and 'error' in result[0]:
             return {
                 "success": False,
                 "url": url,
                 "scan_type": "vulnerabilities",
-                "command": "nikto",
+                "tool_name": "nikto",
+                "tool_description": "Web vulnerability scanner - detects dangerous files and CGI vulnerabilities",
+                "command": "nikto -h {url}".format(url=url),
+                "command_example": "nikto -h https://example.com",
                 "output": "",
+                "vulnerabilities": [],
+                "message": {
+                    "title": "VULNERABILITY SCAN RESULT",
+                    "success_title": "VULNERABILITY SCAN COMPLETED",
+                    "error_title": "VULNERABILITY SCAN FAILED",
+                    "no_vulns": "No vulnerabilities detected",
+                    "processing": "Scanning target for security vulnerabilities...",
+                    "found_vulns": "{count} potential issues found".format(count=len(result))
+                },
                 "error": result[0]['error'] if result else "Unknown error"
             }
         
@@ -401,15 +495,30 @@ async def scan_vulnerabilities(request: Request):
             severity = vuln.get('severity', 'Unknown')
             vuln_type = vuln.get('type', 'Unknown')
             description = vuln.get('description', 'No description')
-            vuln_list.append(f"[{severity}] {vuln_type}: {description}")
+            vuln_list.append("[{severity}] {type}: {desc}".format(
+                severity=severity, 
+                type=vuln_type, 
+                desc=description
+            ))
         
         return {
             "success": True,
             "url": url,
             "scan_type": "vulnerabilities",
-            "command": "nikto",
+            "tool_name": "nikto",
+            "tool_description": "Web vulnerability scanner - detects dangerous files and CGI vulnerabilities",
+            "command": "nikto -h {url}".format(url=url),
+            "command_example": "nikto -h https://example.com",
             "output": "\n".join(vuln_list) if vuln_list else "No vulnerabilities detected",
             "vulnerabilities": result,
+            "message": {
+                "title": "VULNERABILITY SCAN RESULT",
+                "success_title": "VULNERABILITY SCAN COMPLETED",
+                "error_title": "VULNERABILITY SCAN FAILED",
+                "no_vulns": "No vulnerabilities detected",
+                "processing": "Scanning target for security vulnerabilities...",
+                "found_vulns": "{count} potential issues found".format(count=len(vuln_list))
+            },
             "error": None
         }
     except Exception as e:
@@ -432,25 +541,51 @@ async def scan_technologies_endpoint(request: Request):
                 "success": False,
                 "url": url,
                 "scan_type": "technologies",
-                "command": "python-wappalyzer",
+                "tool_name": "wappalyzer",
+                "tool_description": "Technology detection tool - identifies web technologies and software",
+                "command": "python-wappalyzer {url}".format(url=url),
+                "command_example": "python-wappalyzer https://example.com",
                 "output": "",
+                "technologies": {},
+                "message": {
+                    "title": "TECHNOLOGY SCAN RESULT",
+                    "success_title": "TECHNOLOGY SCAN COMPLETED",
+                    "error_title": "TECHNOLOGY SCAN FAILED",
+                    "no_techs": "No technologies detected",
+                    "processing": "Analyzing target technologies..."
+                },
                 "error": result['error']
             }
         
         # Format technologies for display
         tech_list = []
         for tech_name, tech_info in result.get('technologies', {}).items():
-            version_str = f" v{tech_info.get('version', '')}" if tech_info.get('version') else ""
-            confidence_str = f" ({tech_info.get('confidence', 0)}%)" if tech_info.get('confidence') else ""
-            tech_list.append(f"{tech_name}{version_str}{confidence_str}")
+            version_str = " v{version}".format(version=tech_info.get('version', '')) if tech_info.get('version') else ""
+            confidence_str = " ({conf}%)".format(conf=tech_info.get('confidence', 0)) if tech_info.get('confidence') else ""
+            tech_list.append("{name}{version}{confidence}".format(
+                name=tech_name, 
+                version=version_str, 
+                confidence=confidence_str
+            ))
         
         return {
             "success": True,
             "url": url,
             "scan_type": "technologies",
-            "command": "python-wappalyzer",
+            "tool_name": "wappalyzer",
+            "tool_description": "Technology detection tool - identifies web technologies and software",
+            "command": "python-wappalyzer {url}".format(url=url),
+            "command_example": "python-wappalyzer https://example.com",
             "output": "\n".join(tech_list) if tech_list else "No technologies detected",
             "technologies": result.get('technologies', {}),
+            "message": {
+                "title": "TECHNOLOGY SCAN RESULT",
+                "success_title": "TECHNOLOGY SCAN COMPLETED",
+                "error_title": "TECHNOLOGY SCAN FAILED",
+                "no_techs": "No technologies detected",
+                "processing": "Analyzing target technologies...",
+                "found_techs": "{count} technologies identified".format(count=len(tech_list))
+            },
             "error": None
         }
     except Exception as e:
@@ -467,14 +602,25 @@ async def scan_firewall_endpoint(request: Request):
         # Use the proper scan function
         result = scan_firewall(url)
         
-        # Format response for frontend
+        # Format response for frontend with all dynamic text
         if 'error' in result:
             return {
                 "success": False,
                 "url": url,
                 "scan_type": "firewall",
-                "command": "wafw00f",
+                "tool_name": "wafw00f",
+                "tool_description": "Web Application Firewall detection tool",
+                "command": "wafw00f {url}".format(url=url),
+                "command_example": "wafw00f https://example.com",
                 "output": "",
+                "waf_detection": {},
+                "message": {
+                    "title": "WAF DETECTION RESULT",
+                    "success_title": "WAF DETECTION COMPLETED",
+                    "error_title": "WAF DETECTION FAILED",
+                    "no_waf": "No WAF detected",
+                    "processing": "Analyzing target for web application firewall..."
+                },
                 "error": result['error']
             }
         
@@ -482,8 +628,8 @@ async def scan_firewall_endpoint(request: Request):
         waf_info = result.get('waf_detection', {})
         output_lines = []
         if waf_info.get('detected'):
-            output_lines.append(f"WAF Detected: {waf_info.get('waf_name', 'Unknown')}")
-            output_lines.append(f"Confidence: {waf_info.get('confidence', 'Unknown')}")
+            output_lines.append("WAF Detected: {name}".format(name=waf_info.get('waf_name', 'Unknown')))
+            output_lines.append("Confidence: {conf}".format(conf=waf_info.get('confidence', 'Unknown')))
         else:
             output_lines.append("No WAF detected")
         
@@ -491,9 +637,20 @@ async def scan_firewall_endpoint(request: Request):
             "success": True,
             "url": url,
             "scan_type": "firewall",
-            "command": "wafw00f",
+            "tool_name": "wafw00f",
+            "tool_description": "Web Application Firewall detection tool",
+            "command": "wafw00f {url}".format(url=url),
+            "command_example": "wafw00f https://example.com",
             "output": "\n".join(output_lines),
             "waf_detection": waf_info,
+            "message": {
+                "title": "WAF DETECTION RESULT",
+                "success_title": "WAF DETECTION COMPLETED",
+                "error_title": "WAF DETECTION FAILED",
+                "no_waf": "No WAF detected",
+                "processing": "Analyzing target for web application firewall...",
+                "waf_found": "WAF Detected: {name}".format(name=waf_info.get('waf_name', 'Unknown'))
+            },
             "error": None
         }
     except Exception as e:
@@ -511,31 +668,54 @@ async def scan_subdomains_endpoint(request: Request):
         # Use the proper scan function
         result = run_subfinder_scan(domain)
         
-        # Format response for frontend
+        # Format response for frontend with all dynamic text
         if result and len(result) > 0 and 'error' in result[0]:
             return {
                 "success": False,
                 "url": url,
                 "domain": domain,
                 "scan_type": "subdomains",
-                "command": "subfinder",
+                "tool_name": "subfinder",
+                "tool_description": "Passive subdomain discovery tool",
+                "command": "subfinder -d {domain}".format(domain=domain),
+                "command_example": "subfinder -d example.com",
                 "output": "",
+                "subdomains": [],
+                "message": {
+                    "title": "SUBDOMAIN DISCOVERY RESULT",
+                    "success_title": "SUBDOMAIN DISCOVERY COMPLETED",
+                    "error_title": "SUBDOMAIN DISCOVERY FAILED",
+                    "no_subs": "No subdomains found",
+                    "processing": "Discovering subdomains for {domain}...".format(domain=domain),
+                    "found_subs": "{count} subdomains discovered".format(count=len(result))
+                },
                 "error": result[0]['error']
             }
         
         # Format subdomains for display
         subdomain_list = []
         for subdomain in result:
-            subdomain_list.append(f"{subdomain['subdomain']}")
+            subdomain_list.append("{subdomain}".format(subdomain=subdomain['subdomain']))
         
         return {
             "success": True,
             "url": url,
             "domain": domain,
             "scan_type": "subdomains",
-            "command": "subfinder",
+            "tool_name": "subfinder",
+            "tool_description": "Passive subdomain discovery tool",
+            "command": "subfinder -d {domain}".format(domain=domain),
+            "command_example": "subfinder -d example.com",
             "output": "\n".join(subdomain_list) if subdomain_list else "No subdomains found",
             "subdomains": result,
+            "message": {
+                "title": "SUBDOMAIN DISCOVERY RESULT",
+                "success_title": "SUBDOMAIN DISCOVERY COMPLETED",
+                "error_title": "SUBDOMAIN DISCOVERY FAILED",
+                "no_subs": "No subdomains found",
+                "processing": "Discovering subdomains for {domain}...".format(domain=domain),
+                "found_subs": "{count} subdomains discovered".format(count=len(subdomain_list))
+            },
             "error": None
         }
     except Exception as e:
@@ -553,9 +733,12 @@ async def download_results(request: Request):
         # Generate formatted report
         report_content = generate_report(results, scan_type)
         
-        # Save to temporary file
+        # Save to temporary file using platform-independent path
+        import tempfile
+        import os
         filename = f"scan_results_{scan_type}_{int(time.time())}.txt"
-        filepath = f"/tmp/{filename}"
+        temp_dir = tempfile.gettempdir()
+        filepath = os.path.join(temp_dir, filename)
         
         with open(filepath, 'w') as f:
             f.write(report_content)

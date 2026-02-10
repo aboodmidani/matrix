@@ -1,136 +1,94 @@
 <template>
-  <div class="bg-black border-2 border-orange-500 rounded-lg p-6 shadow-2xl">
-    <div class="flex items-center mb-4 text-orange-400 text-sm font-mono">
+  <div class="bg-black border-2 border-red-500 rounded-lg p-6 shadow-2xl">
+    <div class="flex items-center mb-4 text-red-400 text-sm font-mono">
       <span class="animate-pulse">●</span>
-      <span class="ml-2">WAF DETECTION</span>
-      <span class="ml-auto">SESSION: {{ sessionId }}</span>
+      <span class="ml-2">{{ scanTitle }}</span>
+      <span class="ml-auto">{{ sessionLabel }}: {{ sessionId }}</span>
     </div>
-
-    <!-- Input Section -->
-    <div class="border border-orange-600 rounded p-4 md:p-6 bg-gray-900 mb-6">
-      <div class="text-orange-400 font-mono text-sm mb-3">
-        <span class="text-orange-300">></span> Enter target URL:
+    <div class="border border-red-600 rounded p-4 md:p-6 bg-gray-900 mb-6">
+      <div class="text-red-400 font-mono text-sm mb-3">
+        <span class="text-red-300">></span> {{ enterTargetLabel }}
       </div>
       <div class="flex flex-col sm:flex-row gap-3">
-        <input v-model="targetUrl" type="text" placeholder="https://target-system.com" class="flex-1 bg-black border border-orange-500 rounded px-3 py-3 md:py-2 text-orange-400 font-mono text-sm md:text-base focus:outline-none focus:border-orange-400 transition-colors" />
-        <button @click="startScan" :disabled="loading || !targetUrl.trim()" class="px-6 py-3 md:py-2 bg-orange-600 hover:bg-orange-500 disabled:bg-gray-600 text-black font-mono font-bold rounded border border-orange-400 hover:border-orange-300 transition-all duration-300 disabled:cursor-not-allowed min-h-[44px] touch-manipulation">
-          <span v-if="loading" class="flex items-center">
-            <span class="animate-spin mr-2">⟳</span>
-            <span class="hidden sm:inline">SCANNING...</span>
-            <span class="sm:hidden">SCANNING</span>
-          </span>
-          <span v-else>
-            <span class="hidden sm:inline">START WAF SCAN</span>
-            <span class="sm:hidden">SCAN</span>
-          </span>
+        <input v-model="targetUrl" type="text" :placeholder="placeholderText" class="flex-1 bg-black border border-red-500 rounded px-3 py-3 md:py-2 text-red-400 font-mono text-sm md:text-base focus:outline-none focus:border-red-400 transition-all duration-300" />
+        <button @click="startScan" :disabled="loading || !targetUrl.trim()" class="px-6 py-3 md:py-2 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white font-mono font-bold rounded border border-red-400 hover:border-red-300 transition-all duration-300 disabled:cursor-not-allowed min-h-[44px]">
+          <span v-if="loading">{{ scanningLabel }}</span>
+          <span v-else>{{ startScanLabel }}</span>
         </button>
       </div>
     </div>
-
-    <!-- Progress Bar -->
-    <div v-if="loading" class="mt-8 bg-black border-2 border-orange-500 rounded-lg p-6">
-      <div class="text-orange-400 font-mono text-lg font-bold tracking-wider mb-4">
-        <span class="text-orange-300">[WAF SCAN IN PROGRESS]</span>
-      </div>
-      <div class="border border-orange-600 rounded p-4 bg-gray-900">
-        <div class="text-orange-400 font-mono text-xs mb-2">
-          <span class="text-orange-300">root@matrix</span>:<span class="text-blue-400">~</span>$ wafw00f {{ targetUrl }}
+    <transition name="fade">
+      <div v-if="loading" class="mt-8 bg-black border-2 border-red-500 rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-red-400 font-mono text-lg font-bold tracking-wider">{{ processingMessage }}</span>
+          <div class="flex space-x-1">
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+          </div>
         </div>
-        <div class="w-full bg-gray-700 h-2 rounded">
-          <div class="bg-orange-500 h-2 rounded animate-pulse" style="width: 100%"></div>
-        </div>
-        <div class="text-center text-orange-300 font-mono text-xs mt-2">
-          EXECUTING WAF DETECTION
-        </div>
-      </div>
-    </div>
-
-    <!-- Error Notification -->
-    <div v-if="error" class="mt-8 bg-black border-2 border-red-500 rounded-lg p-6">
-      <div class="text-red-400 font-mono text-sm mb-4">
-        <span class="text-red-300">[ERROR]</span> WAF scan failed
-      </div>
-      <div class="border border-red-600 rounded p-4 bg-gray-900">
-        <div class="text-red-400 font-mono text-xs mb-2">
-          <span class="text-red-300">root@matrix</span>:<span class="text-blue-400">~</span>$ wafw00f {{ targetUrl }}
-        </div>
-        <div class="text-red-300 font-mono text-xs">
-          <span class="text-red-400">[ERROR]</span> {{ error }}
+        <div class="border border-red-600 rounded p-4 bg-gray-900">
+          <div class="text-red-400 font-mono text-xs mb-2">
+            <span class="text-red-300">root@matrix</span>:<span class="text-blue-400">~</span>$ {{ commandDisplay }}
+          </div>
+          <div class="text-center text-red-400 font-mono text-xs mt-2">{{ executingLabel }}</div>
         </div>
       </div>
-    </div>
-
-    <!-- Results -->
-    <div v-if="results" class="mt-8 bg-black bg-opacity-80 border border-orange-500 rounded-lg p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold text-orange-400 flex items-center">
-          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-          </svg>
-          WAF Scan Results
-        </h3>
-        <div class="flex space-x-2">
-          <button @click="downloadReport()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-black font-mono text-sm font-bold rounded border border-blue-400 transition-all duration-300">[DOWNLOAD]</button>
+    </transition>
+    <transition name="slide-fade">
+      <div v-if="error" class="mt-8 bg-black border-2 border-red-500 rounded-lg p-6">
+        <div class="flex items-center mb-4">
+          <span class="text-red-400 font-mono text-sm font-bold">{{ errorTitle }}</span>
+        </div>
+        <div class="border border-red-600 rounded p-4 bg-gray-900">
+          <div class="text-red-400 font-mono text-xs mb-2">
+            <span class="text-red-300">root@matrix</span>:<span class="text-blue-400">~</span>$ {{ commandDisplay }}
+          </div>
+          <div class="text-red-400 font-mono text-sm">{{ error }}</div>
         </div>
       </div>
-      <div class="border border-orange-600 rounded p-4 bg-gray-900">
-        <div class="text-orange-400 font-mono text-sm mb-2">
-          <span class="text-orange-300">Target:</span> {{ results.url }}
+    </transition>
+    <transition name="slide-up">
+      <div v-if="results" class="mt-8 bg-black bg-opacity-90 border border-red-500 rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-red-400 flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            {{ resultsTitle }}
+          </h3>
+          <button @click="downloadReport" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-mono text-sm font-bold rounded border border-red-400">{{ downloadLabel }}</button>
         </div>
-        <div class="text-orange-400 font-mono text-sm mb-2">
-          <span class="text-orange-300">Command:</span> {{ results.command }}
-        </div>
-        <div v-if="results.success" class="text-orange-300 font-mono text-sm">
-          <div class="text-green-400 font-bold">[SUCCESS]</div>
-          <pre class="mt-2 p-2 bg-black border border-orange-600 rounded text-xs overflow-auto max-h-96">{{ results.output }}</pre>
-        </div>
-        <div v-else class="text-red-400 font-mono text-sm">
-          <div class="text-red-400 font-bold">[FAILED]</div>
-          <div class="mt-2 p-2 bg-black border border-red-600 rounded text-xs">{{ results.error }}</div>
+        <div class="border border-red-600 rounded p-4 bg-gray-900">
+          <div class="text-red-400 font-mono text-sm mb-2">
+            <span class="text-red-500">{{ targetLabel }}</span> {{ results.url }}
+          </div>
+          <div class="text-red-400 font-mono text-sm mb-2">
+            <span class="text-red-500">{{ toolLabel }}</span> {{ results.tool_name }}
+          </div>
+          <div class="text-red-400 font-mono text-sm mb-2">
+            <span class="text-red-500">{{ commandLabel }}</span> {{ results.command }}
+          </div>
+          <div v-if="results.waf_detection" class="mt-4">
+            <div v-if="results.waf_detection.detected" class="text-red-400 font-mono">
+              <span class="font-bold">{{ wafDetectedLabel }}</span> {{ results.waf_detection.waf_name }}
+            </div>
+            <div v-else class="text-green-400 font-mono">{{ noWafLabel }}</div>
+          </div>
+          <div v-if="results.success" class="mt-4 pt-4 border-t border-red-700">
+            <div class="flex items-center text-red-400">
+              <span class="font-mono font-bold">{{ successMessage }}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { apiService } from '../utils/api'
-
-// XSS Protection: Sanitize URL input
-const sanitizeUrl = (url) => {
-  if (!url) return ''
-  
-  // Remove any HTML/script tags
-  let sanitized = url.replace(/<[^>]*>/g, '')
-  
-  // Remove javascript: protocol and other dangerous protocols
-  sanitized = sanitized.replace(/^(javascript|data|vbscript|file):/i, '')
-  
-  // Remove any whitespace that could be used for bypass
-  sanitized = sanitized.trim()
-  
-  // Only allow http:// and https:// protocols, or no protocol (will add https://)
-  const urlPattern = /^(https?:\/\/)?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*(:[0-9]{1,5})?(\/[^\s]*)?$/
-  if (!urlPattern.test(sanitized)) {
-    return ''
-  }
-  
-  return sanitized
-}
-
-// Escape HTML entities for safe display
-const escapeHtml = (text) => {
-  if (!text) return ''
-  const map = {
-    '&': '&',
-    '<': '<',
-    '>': '>',
-    '"': '"',
-    "'": '&#039;'
-  }
-  return String(text).replace(/[&<>"']/g, m => map[m])
-}
 
 export default {
   name: 'FirewallScan',
@@ -139,129 +97,101 @@ export default {
     const loading = ref(false)
     const results = ref(null)
     const error = ref(null)
-    const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase()
+    const sessionId = ref(Math.random().toString(36).substring(2, 8).toUpperCase())
+    
+    const labels = ref({
+      scanTitle: 'WAF DETECTION',
+      sessionLabel: 'SESSION',
+      enterTargetLabel: 'Enter target URL:',
+      placeholderText: 'https://target-system.com',
+      startScanLabel: 'START WAF DETECTION',
+      scanningLabel: 'SCANNING...',
+      processingMessage: 'ANALYZING WEB APPLICATION FIREWALL',
+      executingLabel: 'EXECUTING WAF DETECTION',
+      errorTitle: 'WAF DETECTION FAILED',
+      resultsTitle: 'WAF DETECTION RESULTS',
+      downloadLabel: '[DOWNLOAD]',
+      targetLabel: 'Target:',
+      toolLabel: 'Tool:',
+      commandLabel: 'Command:',
+      wafDetectedLabel: 'WAF DETECTED:',
+      noWafLabel: 'NO WAF DETECTED',
+      successMessage: 'WAF DETECTION COMPLETED'
+    })
+
+    const commandDisplay = computed(() => {
+      if (results.value) return results.value.command
+      return `wafw00f ${targetUrl.value || '<target>'}`
+    })
 
     const startScan = async () => {
-      // XSS Protection: Sanitize the URL before processing
-      const sanitizedUrl = sanitizeUrl(targetUrl.value)
-      
-      if (!sanitizedUrl) {
-        error.value = 'Please enter a valid URL (e.g., https://example.com)'
-        return
-      }
-
-      loading.value = true
-      error.value = null
-      results.value = null
-
+      if (!targetUrl.value.trim()) { error.value = 'Please enter a valid URL'; return }
+      loading.value = true; error.value = null; results.value = null
       try {
-        // Use apiService which respects environment variables
         const formData = new URLSearchParams()
-        formData.append('url', sanitizedUrl)
-        
+        formData.append('url', targetUrl.value.trim())
         const response = await fetch(`${apiService.baseURL}/scan/firewall`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: formData
         })
-
         if (response.ok) {
           const data = await response.json()
-          // XSS Protection: Sanitize response data before storing
-          if (data.output) {
-            data.output = escapeHtml(data.output)
-          }
           results.value = data
+          if (data.message) labels.value = { ...labels.value, ...data.message }
         } else {
           const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.detail || 'WAF scan failed')
+          throw new Error(errorData.detail || 'Firewall scan failed')
         }
-      } catch (err) {
-        error.value = err.message || 'WAF scan failed'
-      } finally {
-        loading.value = false
-      }
+      } catch (err) { error.value = err.message || 'Firewall scan failed' }
+      finally { loading.value = false }
     }
 
     const downloadReport = async () => {
       if (!results.value) return
-
-      try {
-        // Use apiService which respects environment variables
-        await apiService.downloadReport(results.value, 'firewall')
-      } catch (error) {
-        console.error('Download error:', error)
-        alert('Failed to download report')
-      }
+      try { await apiService.downloadReport(results.value, 'firewall') }
+      catch (err) { console.error('Download error:', err) }
     }
 
     return {
-      targetUrl,
-      loading,
-      results,
-      error,
-      sessionId,
-      startScan,
-      downloadReport
+      targetUrl, loading, results, error, sessionId, labels, commandDisplay,
+      startScan, downloadReport,
+      scanTitle: computed(() => labels.value.scanTitle),
+      sessionLabel: computed(() => labels.value.sessionLabel),
+      enterTargetLabel: computed(() => labels.value.enterTargetLabel),
+      placeholderText: computed(() => labels.value.placeholderText),
+      startScanLabel: computed(() => labels.value.startScanLabel),
+      scanningLabel: computed(() => labels.value.scanningLabel),
+      processingMessage: computed(() => labels.value.processingMessage),
+      executingLabel: computed(() => labels.value.executingLabel),
+      errorTitle: computed(() => labels.value.errorTitle),
+      resultsTitle: computed(() => labels.value.resultsTitle),
+      downloadLabel: computed(() => labels.value.downloadLabel),
+      targetLabel: computed(() => labels.value.targetLabel),
+      toolLabel: computed(() => labels.value.toolLabel),
+      commandLabel: computed(() => labels.value.commandLabel),
+      wafDetectedLabel: computed(() => labels.value.wafDetectedLabel),
+      noWafLabel: computed(() => labels.value.noWafLabel),
+      successMessage: computed(() => labels.value.successMessage)
     }
   }
 }
 </script>
 
 <style scoped>
-/* Enhanced animations */
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #000;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #ff8800;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #cc6600;
-}
-
-/* Enhanced hover effects */
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(255, 136, 0, 0.3);
-}
-
-input:focus {
-  box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.2);
-}
-
-/* Responsive design improvements */
-@media (max-width: 768px) {
-  .hidden-sm {
-    display: none;
-  }
-}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.slide-fade-enter-active { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-fade-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-fade-enter-from, .slide-fade-leave-to { transform: translateY(-10px); opacity: 0; }
+.slide-up-enter-active { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-up-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-up-enter-from { transform: translateY(20px); opacity: 0; }
+.slide-up-leave-to { transform: translateY(0); opacity: 0; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #dc2626; }
+button:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); }
+input:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
 </style>
