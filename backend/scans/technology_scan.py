@@ -1,96 +1,88 @@
-import logging
-from typing import Dict, Any, Optional
-from wappalyzer import analyze
+import requests
+from typing import Dict, Any
 
-logger = logging.getLogger(__name__)
-
-class WappalyzerWrapper:
-    """Wrapper class for Wappalyzer tool integration"""
-    
-    def __init__(self):
-        self.tool_name = "Wappalyzer"
-        self.tool_version = "1.0.20"
-    
-    def scan_target(self, target_url: str) -> Dict[str, Any]:
-        """
-        Scan target URL using Wappalyzer and return structured results
-        
-        Args:
-            target_url (str): The URL to scan for technology detection
-            
-        Returns:
-            Dict[str, Any]: Structured scan results
-        """
-        try:
-            logger.info(f"Running Wappalyzer scan for: {target_url}")
-            
-            # Use Wappalyzer analyze function
-            wappalyzer_output = analyze(target_url)
-            
-            # Process the results
-            return self._process_wappalyzer_output(target_url, wappalyzer_output)
-            
-        except Exception as e:
-            logger.error(f"Wappalyzer scan error: {str(e)}")
-            return self._create_error_result(target_url, str(e))
-    
-    def _process_wappalyzer_output(self, target_url: str, wappalyzer_output: dict) -> Dict[str, Any]:
-        """
-        Process Wappalyzer output and convert to structured format
-        
-        Args:
-            target_url (str): Original target URL
-            wappalyzer_output (dict): Wappalyzer output
-            
-        Returns:
-            Dict[str, Any]: Structured results
-        """
-        if not wappalyzer_output or target_url not in wappalyzer_output:
-            return self._create_error_result(target_url, "No technologies detected")
-        
-        # Get technologies for the target URL
-        technologies_data = wappalyzer_output[target_url]
-        
-        # Create structured response
-        structured_result = {
-            'url': target_url,
-            'timestamp': 0,  # Wappalyzer doesn't provide timestamp
-            'technologies': {},
-            'status': 'success',
-            'tool_info': {
-                'name': self.tool_name,
-                'version': self.tool_version,
-                'output_format': 'dict'
-            }
-        }
-        
-        # Process each detected technology
-        for tech_name, tech_details in technologies_data.items():
-            structured_result['technologies'][tech_name] = {
-                'version': tech_details.get('version', ''),
-                'confidence': tech_details.get('confidence', 0),
-                'categories': tech_details.get('categories', []),
-                'groups': tech_details.get('groups', [])
-            }
-        
-        return structured_result
-    
-    def _create_error_result(self, target_url: str, error_message: str) -> Dict[str, Any]:
-        """Create error result structure"""
-        return {
-            'url': target_url,
-            'timestamp': 0,
-            'technologies': {},
-            'status': 'error',
-            'error': error_message,
-            'tool_info': {
-                'name': self.tool_name,
-                'version': self.tool_version
-            }
-        }
 
 def scan_technologies(url: str) -> Dict[str, Any]:
-    """Main function to scan for technologies using Wappalyzer"""
-    wrapper = WappalyzerWrapper()
-    return wrapper.scan_target(url)
+    """Scan for technologies using basic HTTP analysis"""
+    try:
+        response = requests.get(url, timeout=10, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        
+        technologies = detect_technologies(url, response)
+        
+        return {
+            'url': url,
+            'technologies': technologies,
+            'status': 'success'
+        }
+    except Exception as e:
+        return {
+            'url': url,
+            'technologies': {},
+            'status': 'error',
+            'error': str(e)
+        }
 
+
+def detect_technologies(url: str, response: requests.Response) -> Dict[str, Any]:
+    """Detect technologies from HTTP response"""
+    technologies = {}
+    
+    headers = {k.lower(): v.lower() for k, v in response.headers.items()}
+    server = headers.get('server', '')
+    powered_by = headers.get('x-powered-by', '')
+    content_type = headers.get('content-type', '')
+    html_content = response.text.lower()
+    
+    # Server detection
+    if 'cloudflare' in server:
+        technologies['Cloudflare'] = {'version': '', 'confidence': 100}
+    if 'nginx' in server:
+        technologies['Nginx'] = {'version': '', 'confidence': 90}
+    if 'apache' in server:
+        technologies['Apache'] = {'version': '', 'confidence': 90}
+    if 'microsoft-iis' in server:
+        technologies['IIS'] = {'version': '', 'confidence': 90}
+    
+    # PHP detection
+    if 'php' in powered_by:
+        technologies['PHP'] = {'version': '', 'confidence': 90}
+    
+    # Framework detection from headers
+    if 'laravel' in powered_by or 'laravel' in html_content:
+        technologies['Laravel'] = {'version': '', 'confidence': 80}
+    if 'express' in powered_by:
+        technologies['Express'] = {'version': '', 'confidence': 80}
+    if 'django' in powered_by:
+        technologies['Django'] = {'version': '', 'confidence': 80}
+    if 'next.js' in powered_by:
+        technologies['Next.js'] = {'version': '', 'confidence': 80}
+    if 'nuxt' in powered_by:
+        technologies['Nuxt.js'] = {'version': '', 'confidence': 80}
+    
+    # CMS detection
+    if 'wordpress' in html_content or 'wp-content' in html_content:
+        technologies['WordPress'] = {'version': '', 'confidence': 90}
+    if 'drupal' in html_content:
+        technologies['Drupal'] = {'version': '', 'confidence': 80}
+    if 'joomla' in html_content:
+        technologies['Joomla'] = {'version': '', 'confidence': 80}
+    
+    # JavaScript frameworks
+    if 'react' in html_content:
+        technologies['React'] = {'version': '', 'confidence': 70}
+    if 'vue' in html_content:
+        technologies['Vue.js'] = {'version': '', 'confidence': 70}
+    if 'angular' in html_content:
+        technologies['Angular'] = {'version': '', 'confidence': 70}
+    
+    # CDN detection
+    if 'cdn' in headers or 'cloudflare' in str(headers):
+        technologies['CDN'] = {'version': '', 'confidence': 70}
+    
+    # If no technologies detected, add basic info
+    if not technologies:
+        technologies['Web Server'] = {'version': server or 'Unknown', 'confidence': 50}
+    
+    return technologies
