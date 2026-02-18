@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nmap \
     curl \
     wget \
+    unzip \
     git \
     python3-dev \
     build-essential \
