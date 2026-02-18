@@ -1,123 +1,247 @@
+/* ── Custom fonts — must come before @tailwind directives ────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Mobile-specific responsive styles */
+:root {
+  --matrix-green:      #00ff41;
+  --matrix-green-dim:  #00b32c;
+  --matrix-green-dark: #003b0f;
+  --matrix-cyan:       #00ffff;
+  --matrix-red:        #ff003c;
+  --matrix-yellow:     #ffd700;
+  --matrix-purple:     #bf00ff;
+  --matrix-bg:         #000000;
+  --matrix-surface:    rgba(0, 10, 2, 0.92);
+  --matrix-border:     rgba(0, 255, 65, 0.2);
+  --glow-green:        0 0 8px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.2);
+  --glow-cyan:         0 0 8px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.2);
+  --glow-red:          0 0 8px rgba(255, 0, 60, 0.6), 0 0 20px rgba(255, 0, 60, 0.2);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--matrix-bg);
+  color: var(--matrix-green);
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: var(--matrix-green-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--matrix-green); }
+
+/* ── Glow utilities ──────────────────────────────────────────────────────── */
+.glow-green  { text-shadow: var(--glow-green); }
+.glow-cyan   { text-shadow: var(--glow-cyan); }
+.glow-red    { text-shadow: var(--glow-red); }
+.glow-border { box-shadow: var(--glow-green); }
+
+/* ── Matrix card surface ─────────────────────────────────────────────────── */
+.matrix-card {
+  background: var(--matrix-surface);
+  border: 1px solid var(--matrix-border);
+  backdrop-filter: blur(4px);
+  position: relative;
+  overflow: hidden;
+}
+
+.matrix-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,255,65,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* ── Corner brackets decoration ─────────────────────────────────────────── */
+.bracket-corners {
+  position: relative;
+}
+.bracket-corners::before,
+.bracket-corners::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--matrix-green);
+  border-style: solid;
+  opacity: 0.6;
+}
+.bracket-corners::before {
+  top: -1px; left: -1px;
+  border-width: 2px 0 0 2px;
+}
+.bracket-corners::after {
+  bottom: -1px; right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+/* ── Scan status badges ──────────────────────────────────────────────────── */
+.badge-scanning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ffd700;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+}
+.badge-done  { color: var(--matrix-green); font-size: 0.7rem; letter-spacing: 0.05em; }
+.badge-error { color: var(--matrix-red);   font-size: 0.7rem; letter-spacing: 0.05em; }
+
+/* ── Blinking cursor ─────────────────────────────────────────────────────── */
+.cursor-blink::after {
+  content: '█';
+  animation: blink 1s step-end infinite;
+  color: var(--matrix-green);
+  margin-left: 2px;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Scan line animation ─────────────────────────────────────────────────── */
+.scanline {
+  position: relative;
+  overflow: hidden;
+}
+.scanline::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,65,0.4), transparent);
+  animation: scanline 3s linear infinite;
+}
+@keyframes scanline {
+  0%   { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* ── Typing animation ────────────────────────────────────────────────────── */
+@keyframes typing {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+/* ── Fade-in-up ──────────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up { animation: fadeInUp 0.4s ease forwards; }
+
+/* ── Pulse glow ──────────────────────────────────────────────────────────── */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 4px rgba(0,255,65,0.3); }
+  50%       { box-shadow: 0 0 16px rgba(0,255,65,0.7), 0 0 32px rgba(0,255,65,0.3); }
+}
+.pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+
+/* ── Progress bar shimmer ────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.progress-shimmer {
+  background: linear-gradient(90deg,
+    #00b32c 0%,
+    #00ff41 40%,
+    #00ffcc 50%,
+    #00ff41 60%,
+    #00b32c 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ── Input focus glow ────────────────────────────────────────────────────── */
+.matrix-input:focus {
+  outline: none;
+  border-color: var(--matrix-green);
+  box-shadow: 0 0 0 1px rgba(0,255,65,0.3), 0 0 12px rgba(0,255,65,0.15);
+}
+
+/* ── Button styles ───────────────────────────────────────────────────────── */
+.btn-matrix {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.btn-matrix::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,255,65,0.15), transparent);
+  transition: left 0.4s ease;
+}
+.btn-matrix:hover::before { left: 100%; }
+.btn-matrix:hover {
+  box-shadow: var(--glow-green);
+}
+.btn-matrix:active { transform: scale(0.98); }
+
+/* ── Table styles ────────────────────────────────────────────────────────── */
+.matrix-table th {
+  color: rgba(0,255,65,0.5);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0,255,65,0.15);
+}
+.matrix-table td {
+  padding: 6px 16px 6px 0;
+  border-bottom: 1px solid rgba(0,255,65,0.06);
+  font-size: 0.85rem;
+}
+.matrix-table tr:hover td { background: rgba(0,255,65,0.04); }
+
+/* ── Tag/badge chips ─────────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+.chip:hover { filter: brightness(1.2); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  /* Reduce matrix rain intensity on mobile for performance */
-  #matrix-canvas {
-    opacity: 0.1 !important;
-  }
-
-  /* Adjust modal positioning for mobile */
-  .modal-content {
-    margin: 1rem;
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-  }
-
-  /* Touch-friendly button sizes */
-  .touch-button {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  /* Better spacing for mobile cards */
-  .mobile-card {
-    padding: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  /* Responsive text scaling */
-  .responsive-text {
-    font-size: clamp(0.875rem, 2.5vw, 1rem);
-  }
-
-  /* Improved touch targets */
-  button,
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  /* Better form inputs on mobile */
-  input[type="text"],
-  input[type="url"] {
-    font-size: 16px; /* Prevents zoom on iOS */
-    padding: 12px 16px;
-  }
-
-  /* Improved checkbox and radio button sizes */
-  input[type="checkbox"],
-  input[type="radio"] {
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
-  }
-
-  /* Better modal overlays */
-  .modal-overlay {
-    padding: 1rem;
-  }
+  canvas { opacity: 0.08 !important; }
+  input[type="text"], input[type="url"] { font-size: 16px; }
 }
 
-@media (max-width: 475px) {
-  /* Extra small screens */
-  .xs-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .xs-text {
-    font-size: 0.75rem;
-    line-height: 1rem;
-  }
-
-  .xs-padding {
-    padding: 0.5rem;
-  }
-
-  /* Stack everything vertically on very small screens */
-  .xs-stack {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-}
-
-/* Performance optimizations for mobile */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.05ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.05ms !important;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .matrix-bg {
-    background: #000;
-    opacity: 0.9;
-  }
-
-  #matrix-canvas {
-    opacity: 0.05 !important;
-  }
-}
-
-/* Dark mode improvements (already dark, but ensure consistency) */
-@media (prefers-color-scheme: dark) {
-  /* Already optimized for dark mode */
-}
-
-/* Print styles */
 @media print {
-  #matrix-canvas {
-    display: none !important;
-  }
-
-  .no-print {
-    display: none !important;
-  }
+  canvas { display: none !important; }
 }

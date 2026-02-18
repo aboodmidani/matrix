@@ -1,85 +1,80 @@
 <template>
-  <canvas ref="canvas" class="fixed inset-0 z-0"></canvas>
+  <canvas ref="canvas" class="fixed inset-0 z-0 pointer-events-none"></canvas>
 </template>
 
-<script>
-import { onMounted, onUnmounted, ref } from 'vue'
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 
-export default {
-  name: 'MatrixBackground',
-  setup() {
-    const canvas = ref(null)
-    let animationId = null
+const canvas = ref(null)
+let animationId = null
+let resizeHandler = null
 
-    onMounted(() => {
-      initMatrixRain()
-    })
+onMounted(() => {
+  const ctx = canvas.value.getContext('2d')
 
-    onUnmounted(() => {
-      if (animationId) {
-        cancelAnimationFrame(animationId)
-      }
-    })
+  // Characters — mix of katakana, latin, digits for authentic look
+  const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]|/\\'.split('')
+  const FONT_SIZE = 13
+  let columns, drops
 
-    function initMatrixRain() {
-      const ctx = canvas.value.getContext('2d')
-      
-      // Set canvas size
-      const resizeCanvas = () => {
-        canvas.value.width = window.innerWidth
-        canvas.value.height = window.innerHeight
-      }
-      resizeCanvas()
-      window.addEventListener('resize', resizeCanvas)
-
-      // Matrix characters
-      const matrix = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?'
-      const chars = matrix.split('')
-      const fontSize = 14
-      const columns = Math.floor(canvas.value.width / fontSize)
-      const drops = Array(columns).fill(1)
-
-      // Animation loop
-      const draw = () => {
-        // Semi-transparent black background for trail effect
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
-        ctx.fillRect(0, 0, canvas.value.width, canvas.value.height)
-
-        // Green text
-        ctx.fillStyle = '#00ff41'
-        ctx.font = `${fontSize}px monospace`
-
-        // Draw characters
-        for (let i = 0; i < drops.length; i++) {
-          const char = chars[Math.floor(Math.random() * chars.length)]
-          const x = i * fontSize
-          const y = drops[i] * fontSize
-
-          ctx.fillText(char, x, y)
-
-          // Reset drop to top randomly
-          if (y > canvas.value.height && Math.random() > 0.975) {
-            drops[i] = 0
-          }
-          drops[i]++
-        }
-
-        animationId = requestAnimationFrame(draw)
-      }
-
-      draw()
-    }
-
-    return {
-      canvas
-    }
+  function resize() {
+    canvas.value.width  = window.innerWidth
+    canvas.value.height = window.innerHeight
+    columns = Math.floor(canvas.value.width / FONT_SIZE)
+    drops   = Array(columns).fill(0).map(() => Math.random() * -50)
   }
-}
+
+  resize()
+  resizeHandler = resize
+  window.addEventListener('resize', resizeHandler)
+
+  function draw() {
+    // Fade trail
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
+    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height)
+
+    ctx.font = `${FONT_SIZE}px "Share Tech Mono", monospace`
+
+    for (let i = 0; i < drops.length; i++) {
+      const char = CHARS[Math.floor(Math.random() * CHARS.length)]
+      const x = i * FONT_SIZE
+      const y = drops[i] * FONT_SIZE
+
+      // Leading character is bright white-green
+      if (Math.random() > 0.95) {
+        ctx.fillStyle = '#ccffdd'
+      } else if (Math.random() > 0.7) {
+        ctx.fillStyle = '#00ff41'
+      } else {
+        ctx.fillStyle = '#00b32c'
+      }
+
+      ctx.fillText(char, x, y)
+
+      // Reset drop randomly after it passes the bottom
+      if (y > canvas.value.height && Math.random() > 0.97) {
+        drops[i] = 0
+      }
+      drops[i] += 0.5
+    }
+
+    animationId = requestAnimationFrame(draw)
+  }
+
+  draw()
+})
+
+onUnmounted(() => {
+  if (animationId) cancelAnimationFrame(animationId)
+  if (resizeHandler) window.removeEventListener('resize', resizeHandler)
+})
 </script>
 
 <style scoped>
 canvas {
-  opacity: 0.15;
-  pointer-events: none;
+  opacity: 0.18;
+}
+@media (max-width: 640px) {
+  canvas { opacity: 0.08; }
 }
 </style>
