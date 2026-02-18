@@ -1,112 +1,99 @@
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-const scanState = reactive({
+// ── State ─────────────────────────────────────────────────────────────────────
+
+export const scanState = reactive({
   isScanning: false,
   currentScan: '',
   progress: 0,
-  results: null,
-  error: null
+  done: false,
 })
 
-const scans = reactive({
-  dns: { status: 'idle', data: null },
-  ports: { status: 'idle', data: null },
-  technology: { status: 'idle', data: null },
-  firewall: { status: 'idle', data: null },
-  subdomain: { status: 'idle', data: null }
+export const scans = reactive({
+  dns:        { status: 'idle', data: null, error: null },
+  ports:      { status: 'idle', data: null, error: null },
+  firewall:   { status: 'idle', data: null, error: null },
+  technology: { status: 'idle', data: null, error: null },
+  subdomains: { status: 'idle', data: null, error: null },
 })
 
-const scanConfigs = {
-  dns: { name: 'DNS Reconnaissance', endpoint: '/scan/dns', color: 'blue', icon: '🌐' },
-  ports: { name: 'Port Scanning', endpoint: '/scan/ports', color: 'yellow', icon: '🔌' },
-  technology: { name: 'Technology Detection', endpoint: '/scan/technologies', color: 'purple', icon: '🔧' },
-  firewall: { name: 'WAF Detection', endpoint: '/scan/firewall', color: 'red', icon: '🛡️' },
-  subdomain: { name: 'Subdomain Discovery', endpoint: '/scan/subdomains', color: 'green', icon: '🔍' }
+// ── Config ────────────────────────────────────────────────────────────────────
+
+export const SCAN_CONFIGS = {
+  dns:        { label: 'DNS Reconnaissance',   endpoint: '/scan/dns',          icon: '🌐', color: 'blue'   },
+  ports:      { label: 'Port Scan (nmap)',      endpoint: '/scan/ports',        icon: '🔌', color: 'yellow' },
+  firewall:   { label: 'Firewall / WAF',        endpoint: '/scan/firewall',     icon: '🛡️', color: 'red'    },
+  technology: { label: 'Technologies',          endpoint: '/scan/technologies', icon: '🔧', color: 'purple' },
+  subdomains: { label: 'Subdomain Discovery',   endpoint: '/scan/subdomains',   icon: '🔍', color: 'green'  },
 }
 
-async function runSingleScan(scanType, url) {
-  const config = scanConfigs[scanType]
-  if (!config) return
+// ── Internal helpers ──────────────────────────────────────────────────────────
 
-  scans[scanType].status = 'scanning'
-  scanState.currentScan = config.name
+async function _runScan(key, url) {
+  const cfg = SCAN_CONFIGS[key]
+  scans[key].status = 'scanning'
+  scans[key].data   = null
+  scans[key].error  = null
+  scanState.currentScan = cfg.label
 
   try {
-    const formData = new URLSearchParams()
-    formData.append('url', url)
-
-    const response = await fetch(`${API_URL}${config.endpoint}`, {
+    const body = new URLSearchParams({ url })
+    const res = await fetch(`${API_URL}${cfg.endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: formData
+      body,
     })
-
-    if (response.ok) {
-      const data = await response.json()
-      scans[scanType].data = data
-      scans[scanType].status = 'complete'
-    } else {
-      scans[scanType].status = 'error'
-      scans[scanType].error = 'Scan failed'
-    }
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`)
+    scans[key].data   = json
+    scans[key].status = 'done'
   } catch (err) {
-    scans[scanType].status = 'error'
-    scans[scanType].error = err.message
+    scans[key].error  = err.message
+    scans[key].status = 'error'
   }
 }
 
-async function runAllScans(url) {
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export async function runAllScans(url) {
+  // Reset
   scanState.isScanning = true
-  scanState.error = null
-  scanState.results = null
-  
-  Object.keys(scans).forEach(key => {
+  scanState.progress   = 0
+  scanState.done       = false
+  for (const key of Object.keys(scans)) {
     scans[key].status = 'idle'
-    scans[key].data = null
-    scans[key].error = null
-  })
-
-  const scanTypes = Object.keys(scanConfigs)
-  const totalScans = scanTypes.length
-  let completedScans = 0
-
-  const scanPromises = scanTypes.map(async (scanType) => {
-    await runSingleScan(scanType, url)
-    completedScans++
-    scanState.progress = Math.round((completedScans / totalScans) * 100)
-  })
-
-  await Promise.all(scanPromises)
-  
-  scanState.isScanning = false
-  scanState.currentScan = ''
-  scanState.progress = 100
-  scanState.results = { url, timestamp: Date.now() }
-}
-
-function resetScans() {
-  Object.keys(scans).forEach(key => {
-    scans[key].status = 'idle'
-    scans[key].data = null
-    scans[key].error = null
-  })
-  
-  scanState.isScanning = false
-  scanState.currentScan = ''
-  scanState.progress = 0
-  scanState.results = null
-  scanState.error = null
-}
-
-export function useScanner() {
-  return {
-    scanState,
-    scans,
-    scanConfigs,
-    runSingleScan,
-    runAllScans,
-    resetScans
+    scans[key].data   = null
+    scans[key].error  = null
   }
+
+  const keys = Object.keys(SCAN_CONFIGS)
+  let completed = 0
+
+  // Run all scans in parallel
+  await Promise.all(
+    keys.map(async (key) => {
+      await _runScan(key, url)
+      completed++
+      scanState.progress = Math.round((completed / keys.length) * 100)
+    })
+  )
+
+  scanState.isScanning  = false
+  scanState.currentScan = ''
+  scanState.progress    = 100
+  scanState.done        = true
+}
+
+export function resetScans() {
+  for (const key of Object.keys(scans)) {
+    scans[key].status = 'idle'
+    scans[key].data   = null
+    scans[key].error  = null
+  }
+  scanState.isScanning  = false
+  scanState.currentScan = ''
+  scanState.progress    = 0
+  scanState.done        = false
 }

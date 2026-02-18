@@ -1,54 +1,58 @@
 import socket
 from typing import List, Dict, Any
-from tools import tool_manager
+from tools import check_tool, run_command
+
+# Common subdomains for fallback brute-force
+COMMON_PREFIXES = [
+    'www', 'mail', 'ftp', 'smtp', 'pop', 'imap', 'webmail',
+    'ns1', 'ns2', 'ns3', 'mx', 'mx1', 'mx2',
+    'admin', 'portal', 'api', 'dev', 'staging', 'test', 'beta',
+    'blog', 'shop', 'store', 'app', 'mobile', 'm',
+    'vpn', 'remote', 'secure', 'cdn', 'static', 'assets',
+    'git', 'gitlab', 'github', 'jenkins', 'ci', 'docs',
+    'support', 'help', 'forum', 'community', 'news',
+    'backup', 'old', 'new', 'v2', 'demo', 'sandbox',
+    'db', 'mysql', 'sql', 'mongo', 'redis', 'elastic',
+    'cpanel', 'whm', 'webdisk', 'autodiscover', 'autoconfig',
+]
 
 
 def run_subfinder_scan(domain: str) -> List[Dict[str, Any]]:
-    """Run subfinder command"""
-    if not tool_manager.check_tool_availability('subfinder'):
-        # Fallback to basic subdomain enumeration
-        return basic_subdomain_enum(domain)
-    
-    success, stdout, stderr = tool_manager.run_command([
-        'subfinder', '-d', domain, '-silent'
-    ], timeout=60)
-    
-    if success:
-        return parse_subdomains(stdout, domain)
-    else:
-        return basic_subdomain_enum(domain)
+    """Discover subdomains using subfinder CLI. Falls back to brute-force."""
+    if check_tool('subfinder'):
+        return _subfinder_scan(domain)
+    return _bruteforce_scan(domain)
 
 
-def basic_subdomain_enum(domain: str) -> List[Dict[str, Any]]:
-    """Basic subdomain enumeration using common prefixes"""
-    subdomains = []
-    common_prefixes = ['www', 'mail', 'ftp', 'localhost', 'webmail', 'smtp', 'pop', 'ns1', 'webdisk', 'ns2', 'cpanel', 'whm', 'autodiscover', 'autoconfig', 'm', 'imap', 'test', 'ns', 'blog', 'pop3', 'dev', 'www2', 'admin', 'forum', 'news', 'vpn', 'ns3', 'mail2', 'new', 'mysql', 'old', 'lists', 'support', 'mobile', 'mx', 'static', 'docs', 'beta', 'shop', 'sql', 'secure', 'demo', 'cdc', 'git', 'staging', 'backup', 'moodle', 'stage', 'pre', 'v2', 'owa', 'en', 'start', 'share', 's1', 's2', 's3', 's4', 's5']
-    
-    for prefix in common_prefixes:
-        subdomain = f"{prefix}.{domain}"
-        try:
-            socket.gethostbyname(subdomain)
-            subdomains.append({"subdomain": subdomain, "discovered": True})
-        except:
-            pass
-    
-    return subdomains
+def _subfinder_scan(domain: str) -> List[Dict[str, Any]]:
+    success, stdout, stderr = run_command(
+        ['subfinder', '-d', domain, '-silent'],
+        timeout=60
+    )
+    if success and stdout.strip():
+        return _parse_output(stdout, domain)
+    return _bruteforce_scan(domain)
 
 
-def parse_subdomains(text: str, domain: str) -> List[Dict[str, Any]]:
-    """Parse subfinder output"""
-    subdomains = []
+def _parse_output(text: str, domain: str) -> List[Dict[str, Any]]:
     seen = set()
-    
-    for line in text.strip().split('\n'):
-        line = line.strip()
-        if line and domain in line:
-            if line not in seen:
-                seen.add(line)
-                subdomains.append({"subdomain": line, "discovered": True})
-    
-    # If no results, try basic enumeration
-    if not subdomains:
-        return basic_subdomain_enum(domain)
-    
-    return subdomains
+    results = []
+    for line in text.strip().splitlines():
+        sub = line.strip()
+        if sub and domain in sub and sub not in seen:
+            seen.add(sub)
+            results.append({'subdomain': sub})
+    return results
+
+
+def _bruteforce_scan(domain: str) -> List[Dict[str, Any]]:
+    """Fallback: resolve common subdomain prefixes."""
+    results = []
+    for prefix in COMMON_PREFIXES:
+        fqdn = f"{prefix}.{domain}"
+        try:
+            socket.gethostbyname(fqdn)
+            results.append({'subdomain': fqdn})
+        except Exception:
+            pass
+    return results

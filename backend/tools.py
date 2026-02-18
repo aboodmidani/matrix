@@ -1,111 +1,45 @@
 import subprocess
-import json
-import tempfile
-import os
-import platform
-import logging
 import shutil
-from typing import Dict, List, Any, Optional, Tuple
+import logging
+from typing import List, Tuple, Optional
 from config import settings
 
 logger = logging.getLogger(__name__)
 
-class ToolManager:
-    """Manager for CLI tool operations and validation"""
-    
-    def __init__(self):
-        self.tools = {
-            'dirsearch': {
-                'command': 'dirsearch',
-                'required': False,
-                'description': 'Directory enumeration tool'
-            },
-            'nikto': {
-                'command': 'nikto',
-                'required': False,
-                'description': 'Web vulnerability scanner'
-            },
-            'nmap': {
-                'command': 'nmap',
-                'required': False,
-                'description': 'Network scanner'
-            },
-            'dnsrecon': {
-                'command': 'dnsrecon',
-                'required': False,
-                'description': 'DNS reconnaissance tool'
-            },
-            'wafw00f': {
-                'command': 'wafw00f',
-                'required': False,
-                'description': 'WAF detection tool'
-            },
-            'subfinder': {
-                'command': 'subfinder',
-                'required': False,
-                'description': 'Subdomain discovery tool'
-            }
-        }
-    
-    def check_tool_availability(self, tool_name: str) -> bool:
-        """Check if a tool is available in the system"""
-        try:
-            tool_cmd = self.tools[tool_name]['command']
-            # Use shutil.which for cross-platform compatibility
-            # On Windows, it looks for .exe, .bat, .cmd files
-            # On Linux/macOS, it looks in PATH
-            result = shutil.which(tool_cmd)
-            if result:
-                logger.info(f"Tool '{tool_name}' found at: {result}")
-                return True
-            else:
-                logger.warning(f"Tool '{tool_name}' not found in PATH")
-                return False
-        except Exception as e:
-            logger.warning(f"Failed to check {tool_name} availability: {e}")
-            return False
-    
-    def get_temp_path(self, filename: str) -> str:
-        """Get platform-independent temporary file path"""
-        temp_dir = tempfile.gettempdir()
-        return os.path.join(temp_dir, filename)
-    
-    def run_command(self, command: List[str], timeout: Optional[int] = None) -> Tuple[bool, str, str]:
-        """
-        Run a command and return success status, stdout, and stderr
-        
-        Returns:
-            Tuple of (success: bool, stdout: str, stderr: str)
-        """
-        if timeout is None:
-            timeout = settings.SCAN_TIMEOUT
-            
-        try:
-            logger.info(f"Executing command: {' '.join(command)}")
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-            
-            success = result.returncode == 0
-            stdout = result.stdout
-            stderr = result.stderr
-            
-            if success:
-                logger.info(f"Command completed successfully: {' '.join(command)}")
-            else:
-                logger.warning(f"Command failed with return code {result.returncode}: {' '.join(command)}")
-                logger.warning(f"Stderr: {stderr}")
-            
-            return success, stdout, stderr
-            
-        except subprocess.TimeoutExpired:
-            logger.error(f"Command timed out after {timeout} seconds: {' '.join(command)}")
-            return False, "", f"Command timed out after {timeout} seconds"
-        except Exception as e:
-            logger.error(f"Command execution failed: {e}")
-            return False, "", str(e)
+TOOLS = {
+    'nmap':      'Network port scanner',
+    'dnsrecon':  'DNS reconnaissance tool',
+    'wafw00f':   'WAF detection tool',
+    'subfinder': 'Subdomain discovery tool',
+}
 
-tool_manager = ToolManager()
+
+def check_tool(name: str) -> bool:
+    """Return True if the tool binary is available in PATH."""
+    found = shutil.which(name) is not None
+    if not found:
+        logger.warning(f"Tool '{name}' not found in PATH")
+    return found
+
+
+def run_command(command: List[str], timeout: Optional[int] = None) -> Tuple[bool, str, str]:
+    """
+    Run a CLI command.
+    Returns (success, stdout, stderr).
+    """
+    timeout = timeout or settings.SCAN_TIMEOUT
+    try:
+        logger.info(f"Running: {' '.join(command)}")
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        return result.returncode == 0, result.stdout, result.stderr
+    except subprocess.TimeoutExpired:
+        logger.error(f"Command timed out: {' '.join(command)}")
+        return False, "", "Command timed out"
+    except Exception as e:
+        logger.error(f"Command error: {e}")
+        return False, "", str(e)

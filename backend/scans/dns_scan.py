@@ -1,98 +1,88 @@
 import re
 import socket
-from typing import Dict, Any, List
-from tools import tool_manager
+from typing import Dict, Any
+from tools import check_tool, run_command
 
 
 def run_dnsrecon(domain: str) -> Dict[str, Any]:
-    """Run dnsrecon command"""
-    if not tool_manager.check_tool_availability('dnsrecon'):
-        # Fallback to basic DNS lookup
-        return basic_dns_lookup(domain)
-    
-    success, stdout, stderr = tool_manager.run_command(
-        ['dnsrecon', '-d', domain, '-t', 'std'], timeout=60
+    """Run DNS recon using dnsrecon CLI. Falls back to socket-based lookup."""
+    if check_tool('dnsrecon'):
+        return _dnsrecon_scan(domain)
+    return _socket_lookup(domain)
+
+
+def _dnsrecon_scan(domain: str) -> Dict[str, Any]:
+    success, stdout, stderr = run_command(
+        ['dnsrecon', '-d', domain, '-t', 'std'],
+        timeout=60
     )
-    
-    if success:
-        return parse_dns_output(stdout, domain)
-    else:
-        # Fallback to basic DNS lookup on failure
-        return basic_dns_lookup(domain)
+    if success and stdout:
+        return _parse_output(stdout, domain)
+    return _socket_lookup(domain)
 
 
-def basic_dns_lookup(domain: str) -> Dict[str, Any]:
-    """Basic DNS lookup using socket module"""
+def _parse_output(text: str, domain: str) -> Dict[str, Any]:
     records = {
-        "A_records": [],
-        "AAAA_records": [],
-        "MX_records": [],
-        "NS_records": [],
-        "TXT_records": []
+        'A': [], 'AAAA': [], 'MX': [], 'NS': [], 'TXT': []
     }
-    
-    try:
-        # A record
-        ip = socket.gethostbyname(domain)
-        if ip:
-            records["A_records"].append(ip)
-    except:
-        pass
-    
-    try:
-        # MX records
-        mx_records = socket.gethostbyname_ex(domain)
-        # gethostbyname_ex returns (hostname, aliaslist, ipaddrlist)
-        for ip in mx_records[2]:
-            if ':' not in ip:  # IPv4
-                records["A_records"].append(ip)
-    except:
-        pass
-    
-    return {"records": records, "raw_output": ""}
-
-
-def parse_dns_output(text: str, domain: str) -> Dict[str, Any]:
-    """Parse dnsrecon output"""
-    records = {
-        "A_records": [],
-        "AAAA_records": [],
-        "MX_records": [],
-        "NS_records": [],
-        "TXT_records": []
-    }
-    
-    for line in text.split('\n'):
+    for line in text.splitlines():
         line = line.strip()
-        
-        # A records
-        if 'A' in line and domain in line:
-            match = re.search(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', line)
-            if match and not match.group(1).startswith('127.'):
-                ip = match.group(1)
-                if ip not in records["A_records"]:
-                    records["A_records"].append(ip)
-        
-        # AAAA records (IPv6)
+
+        # A records — IPv4
+        if re.search(r'\bA\b', line):
+            m = re.search(r'(\d{1,3}(?:\.\d{1,3}){3})', line)
+            if m and not m.group(1).startswith('127.'):
+                ip = m.group(1)
+                if ip not in records['A']:
+                    records['A'].append(ip)
+
+        # AAAA records — IPv6
         if 'AAAA' in line:
-            match = re.search(r'([a-fA-F0-9:]+:+[a-fA-F0-9:]+)', line)
-            if match:
-                records["AAAA_records"].append(match.group(1))
-        
+            m = re.search(r'([0-9a-fA-F:]{4,}:[0-9a-fA-F:]+)', line)
+            if m:
+                addr = m.group(1)
+                if addr not in records['AAAA']:
+                    records['AAAA'].append(addr)
+
         # MX records
         if 'MX' in line:
-            match = re.search(r'(\S+\.' + re.escape(domain) + ')', line)
-            if match:
-                mx = match.group(1)
-                if mx not in records["MX_records"]:
-                    records["MX_records"].append(mx)
-        
+            m = re.search(r'([\w.-]+\.\w{2,})', line)
+            if m:
+                host = m.group(1)
+                if host not in records['MX']:
+                    records['MX'].append(host)
+
         # NS records
-        if 'NS' in line:
-            match = re.search(r'(\S+\.' + re.escape(domain) + ')', line)
-            if match:
-                ns = match.group(1)
-                if ns not in records["NS_records"]:
-                    records["NS_records"].append(ns)
-    
-    return {"records": records, "raw_output": text}
+        if re.search(r'\bNS\b', line):
+            m = re.search(r'([\w.-]+\.\w{2,})', line)
+            if m:
+                host = m.group(1)
+                if host not in records['NS'] and host != domain:
+                    records['NS'].append(host)
+
+        # TXT records
+        if 'TXT' in line:
+            m = re.search(r'"([^"]+)"', line)
+            if m:
+                txt = m.group(1)
+                if txt not in records['TXT']:
+                    records['TXT'].append(txt)
+
+    return {'records': records}
+
+
+def _socket_lookup(domain: str) -> Dict[str, Any]:
+    """Minimal fallback using socket."""
+    records = {'A': [], 'AAAA': [], 'MX': [], 'NS': [], 'TXT': []}
+    try:
+        ip = socket.gethostbyname(domain)
+        if ip:
+            records['A'].append(ip)
+        # gethostbyname_ex may return multiple IPs
+        _, _, ips = socket.gethostbyname_ex(domain)
+        for addr in ips:
+            if addr not in records['A']:
+                records['A'].append(addr)
+    except Exception:
+        pass
+    return {'records': records}
