@@ -25,7 +25,7 @@ def run_nmap_scan(domain: str) -> List[Dict[str, Any]]:
 def _nmap_scan(domain: str) -> List[Dict[str, Any]]:
     port_list = ','.join(str(p) for p in PORTS)
     success, stdout, stderr = run_command(
-        ['nmap', '-sV', '--version-intensity', '2', '-p', port_list, '--open', domain],
+        ['nmap', '-sV', '-sS', '-sC', '--version-intensity', '2', '-p', port_list, '--open', domain],
         timeout=60
     )
     if success and stdout:
