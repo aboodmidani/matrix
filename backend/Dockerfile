@@ -1,59 +1,51 @@
 FROM python:3.11-slim
 
-# Set environment variables
+# ── Environment ───────────────────────────────────────────────────────────────
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV ENVIRONMENT=production
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# ── System dependencies + scanning tools ─────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
     nmap \
     curl \
-    python3-dev \
-    python3-pip \
-    python3-venv \
-    build-essential \
-    git \
     wget \
-    firefox-esr \
-    xvfb \
+    git \
+    python3-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dirsearch
-RUN git clone https://github.com/maurosoria/dirsearch.git /opt/dirsearch && \
-    ln -s /opt/dirsearch/dirsearch.py /usr/local/bin/dirsearch
-
-# Install nikto
-RUN git clone https://github.com/sullo/nikto.git /opt/nikto && \
-    ln -s /opt/nikto/program/nikto.pl /usr/local/bin/nikto
-
 # Install dnsrecon
-RUN git clone https://github.com/darkoperator/dnsrecon.git /opt/dnsrecon && \
-    ln -s /opt/dnsrecon/dnsrecon.py /usr/local/bin/dnsrecon
+RUN pip install --no-cache-dir dnsrecon
 
-# Create app directory
+# Install wafw00f
+RUN pip install --no-cache-dir wafw00f
+
+# Install subfinder (Go binary)
+RUN wget -q https://github.com/projectdiscovery/subfinder/releases/download/v2.6.3/subfinder_2.6.3_linux_amd64.zip \
+    -O /tmp/subfinder.zip \
+    && cd /tmp && unzip -q subfinder.zip subfinder \
+    && mv /tmp/subfinder /usr/local/bin/subfinder \
+    && chmod +x /usr/local/bin/subfinder \
+    && rm /tmp/subfinder.zip
+
+# ── App setup ─────────────────────────────────────────────────────────────────
 WORKDIR /app
 
-# Copy requirements first for better caching
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
 COPY . .
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash app \
-    && chown -R app:app /app
-USER app
+# ── Non-root user ─────────────────────────────────────────────────────────────
+RUN useradd --create-home --shell /bin/bash appuser \
+    && chown -R appuser:appuser /app
+USER appuser
 
-# Expose port
+# ── Runtime ───────────────────────────────────────────────────────────────────
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

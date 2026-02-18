@@ -1,29 +1,35 @@
-FROM node:18-alpine
+FROM node:18-alpine AS builder
 
-# Set environment variables
-ENV NODE_ENV=production
-
-# Create app directory
+# ── Build stage ───────────────────────────────────────────────────────────────
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
-
-# Copy source code
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Expose port
-EXPOSE 5173
+# ── Production stage ──────────────────────────────────────────────────────────
+FROM nginx:alpine
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5173/ || exit 1
+# Copy built assets
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Start the application
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
+# Nginx config: SPA routing (all routes → index.html)
+RUN printf 'server {\n\
+    listen 80;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html;\n\
+    location / {\n\
+        try_files $uri $uri/ /index.html;\n\
+    }\n\
+    gzip on;\n\
+    gzip_types text/plain text/css application/javascript application/json;\n\
+}\n' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget -qO- http://localhost/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
