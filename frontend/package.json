@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "aos": "^2.3.4",
     "animate.css": "^4.1.1",
+    "aos": "^2.3.4",
     "dotenv": "^17.2.3",
     "framer-motion": "^11.0.3",
     "vue": "^3.4.0",

@@ -3,7 +3,7 @@
     <div class="flex items-center gap-2 mb-2">
       <div class="w-1 h-3" style="background: var(--matrix-green-dim);"></div>
       <p class="text-xs tracking-widest uppercase" style="color: rgba(0,255,65,0.5);">{{ label }}</p>
-      <span class="text-xs px-1.5 py-0.5 rounded" style="background: rgba(0,255,65,0.08); color: rgba(0,255,65,0.5); border: 1px solid rgba(0,255,65,0.15);">
+      <span class="text-xs px-1.5 py-0.5 rounded" style="background: rgba(0,255,65,0.08); color: rgba(0,255,65,0.5); border: 1px solid rgba(0,255,65,0.7);">
         {{ items.length }}
       </span>
     </div>

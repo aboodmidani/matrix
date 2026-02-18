@@ -45,7 +45,7 @@
     <!-- Body -->
     <Transition name="slide">
       <div v-if="open" class="px-5 pb-5">
-        <div class="h-px mb-4" :style="{ background: `rgba(${accentRgb}, 0.15)` }"></div>
+        <div class="h-px mb-4" :style="{ background: `rgba(${accentRgb}, 0.7)` }"></div>
 
         <!-- Scanning state -->
         <div v-if="scan.status === 'scanning'" class="flex items-center gap-3 py-4">
@@ -109,7 +109,7 @@ const accentColor = computed(() => colorEntry.value.hex)
 const accentRgb   = computed(() => colorEntry.value.rgb)
 
 const cardStyle = computed(() => ({
-  borderColor: `rgba(${accentRgb.value}, 0.25)`,
+  borderColor: `rgba(${accentRgb.value}, 0.7)`,
   borderWidth: '1px',
   borderStyle: 'solid',
 }))

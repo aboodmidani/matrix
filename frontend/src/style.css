@@ -15,7 +15,7 @@
   --matrix-purple:     #bf00ff;
   --matrix-bg:         #000000;
   --matrix-surface:    rgba(0, 10, 2, 0.92);
-  --matrix-border:     rgba(0, 255, 65, 0.2);
+  --matrix-border:     rgba(0, 255, 65, 0.7);
   --glow-green:        0 0 8px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.2);
   --glow-cyan:         0 0 8px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.2);
   --glow-red:          0 0 8px rgba(255, 0, 60, 0.6), 0 0 20px rgba(255, 0, 60, 0.2);
