@@ -3,6 +3,8 @@
 > A focused web security assessment platform with a Matrix-themed UI.  
 > **For authorized use only — only scan systems you own or have explicit permission to test.**
 
+Demo: https://matrix-audit.netlify.app/
+
 ---
 
 ## Features
