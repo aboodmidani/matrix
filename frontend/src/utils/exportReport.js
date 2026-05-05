@@ -27,7 +27,7 @@ export function exportTxt(targetUrl, scans, SCAN_CONFIGS) {
   const dns = scans.dns
   if (dns.status === 'done' && dns.data?.records) {
     const rec = dns.data.records
-    const types = ['A', 'AAAA', 'MX', 'NS', 'TXT']
+    const types = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'SOA', 'SRV', 'CNAME']
     let any = false
     for (const t of types) {
       if (rec[t] && rec[t].length) {
@@ -144,4 +144,70 @@ export function exportTxt(targetUrl, scans, SCAN_CONFIGS) {
   a.download     = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+
+/**
+ * Generate and download a JSON scan report.
+ * @param {string} targetUrl  - The scanned URL
+ * @param {object} scans      - The reactive scans object from useScanner
+ * @param {object} SCAN_CONFIGS - The scan config map
+ */
+export function exportJson(targetUrl, scans, SCAN_CONFIGS) {
+  const now = new Date()
+  const report = {
+    tool: 'Matrix Scanner',
+    version: '1.0.0',
+    target: targetUrl,
+    timestamp: now.toISOString(),
+    scans: {},
+  }
+
+  for (const [key, cfg] of Object.entries(SCAN_CONFIGS)) {
+    const scan = scans[key]
+    report.scans[key] = {
+      label: cfg.label,
+      status: scan.status,
+      data: scan.status === 'done' ? scan.data : null,
+      error: scan.status === 'error' ? scan.error : null,
+    }
+  }
+
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  const filename = `matrix-scan_${targetUrl.replace(/https?:\/\//, '').replace(/[^a-z0-9]/gi, '_')}_${now.toISOString().slice(0,10)}.json`
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+
+/**
+ * Copy a string to clipboard.
+ * @param {string} text - Text to copy
+ * @returns {Promise<boolean>} - Whether the copy succeeded
+ */
+export async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      return true
+    } catch {
+      return false
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  }
 }

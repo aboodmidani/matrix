@@ -1,18 +1,15 @@
 {
-  "name": "web-audit-frontend",
+  "name": "matrix-scanner",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src/"
   },
   "dependencies": {
-    "animate.css": "^4.1.1",
-    "aos": "^2.3.4",
-    "dotenv": "^17.2.3",
-    "framer-motion": "^11.0.3",
     "vue": "^3.4.0",
     "vue-router": "^4.6.4"
   },

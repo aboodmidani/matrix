@@ -31,15 +31,26 @@
         </span>
       </div>
 
-      <!-- Chevron -->
-      <svg
-        class="w-4 h-4 flex-shrink-0 transition-transform duration-300"
-        :class="open ? 'rotate-180' : ''"
-        :style="{ color: accentColor, opacity: 0.7 }"
-        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-      </svg>
+      <!-- Chevron + Re-run -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button
+          v-if="scan.status === 'done' || scan.status === 'error'"
+          @click.stop="$emit('rerun')"
+          class="text-xs px-2 py-1 transition-colors duration-150"
+          :style="`color: ${accentColor}; opacity: 0.5; border: 1px solid rgba(${accentRgb}, 0.3); border-radius: 2px;`"
+          title="Re-run this scan"
+        >
+          ↻
+        </button>
+        <svg
+          class="w-4 h-4 flex-shrink-0 transition-transform duration-300"
+          :class="open ? 'rotate-180' : ''"
+          :style="{ color: accentColor, opacity: 0.7 }"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
     </button>
 
     <!-- Body -->
@@ -92,13 +103,15 @@ const props = defineProps({
   scan:   { type: Object, required: true },
 })
 
+defineEmits(['rerun'])
+
 const open = ref(true)
 
 // Map color names to actual hex + rgb values (avoids Tailwind purge issues)
 const COLOR_MAP = {
   blue:   { hex: '#00bfff', rgb: '0,191,255' },
   yellow: { hex: '#ffd700', rgb: '255,215,0' },
-  red:    { hex: '#ff3c5a', rgb: '255,60,90' },
+  red:    { hex: '#ff003c', rgb: '255,0,60' },
   purple: { hex: '#bf00ff', rgb: '191,0,255' },
   green:  { hex: '#00ff41', rgb: '0,255,65' },
   cyan:   { hex: '#00ffff', rgb: '0,255,255' },

@@ -80,6 +80,7 @@
                       v-model="targetUrl"
                       type="text"
                       placeholder="https://target.com"
+                      aria-label="Target URL to scan"
                       class="matrix-input w-full pl-9 pr-4 py-3 text-sm"
                       style="
                         background: rgba(0,8,2,0.9);
@@ -88,6 +89,7 @@
                         font-family: 'Share Tech Mono', monospace;
                         border-radius: 2px;
                       "
+                      :style="urlError ? { borderColor: 'var(--matrix-red)' } : {}"
                       :disabled="scanState.isScanning"
                       @keyup.enter="start"
                     />
@@ -136,9 +138,9 @@
                         @click="stop"
                         class="btn-matrix px-5 py-3 font-bold tracking-[0.15em] text-sm uppercase flex items-center gap-2"
                         style="
-                          background: rgba(255,60,90,0.08);
-                          border: 1px solid rgba(255,60,90,0.45);
-                          color: #ff3c5a;
+                          background: rgba(255,0,60,0.08);
+                          border: 1px solid rgba(255,0,60,0.45);
+                          color: #ff003c;
                           font-family: 'Orbitron', monospace;
                           border-radius: 2px;
                         "
@@ -148,6 +150,7 @@
                           <rect x="6" y="6" width="12" height="12" rx="1"/>
                         </svg>
                         <span class="hidden sm:inline">STOP</span>
+                        <span class="sm:hidden">STOP</span>
                       </button>
                     </template>
                   </div>
@@ -169,6 +172,10 @@
                     {{ t.replace('https://', '') }}
                   </button>
                 </div>
+                <!-- Validation error -->
+                <p v-if="urlError" class="text-xs mt-2" style="color: var(--matrix-red);">
+                  {{ urlError }}
+                </p>
               </div>
             </div>
 
@@ -182,7 +189,7 @@
                       class="w-1.5 h-1.5 rounded-full"
                       :style="scanState.isScanning
                         ? 'background: #ffd700; box-shadow: 0 0 6px #ffd700; animation: pulse 1s ease-in-out infinite;'
-                        : 'background: #ff3c5a;'"
+                        : 'background: #ff003c;'"
                     ></span>
                     <span class="text-xs tracking-[0.25em] uppercase" style="color: rgba(0,255,65,0.4);">
                       {{ scanState.isScanning ? 'Scanning' : 'Stopped' }}
@@ -207,7 +214,7 @@
                       :class="scanState.isScanning ? 'progress-shimmer' : ''"
                       :style="{
                         width: `${scanState.progress}%`,
-                        background: scanState.isScanning ? '' : 'rgba(255,60,90,0.5)',
+                        background: scanState.isScanning ? '' : 'rgba(255,0,60,0.5)',
                       }"
                     ></div>
                   </div>
@@ -226,7 +233,7 @@
                       :style="{
                         background:
                           scans[key].status === 'done'     ? '#00ff41' :
-                          scans[key].status === 'error'    ? '#ff3c5a' :
+                          scans[key].status === 'error'    ? '#ff003c' :
                           scans[key].status === 'scanning' ? '#ffd700' :
                           'rgba(0,255,65,0.12)',
                         boxShadow:
@@ -238,13 +245,13 @@
                       :style="{
                         color:
                           scans[key].status === 'done'     ? 'rgba(0,255,65,0.7)' :
-                          scans[key].status === 'error'    ? 'rgba(255,60,90,0.7)' :
+                          scans[key].status === 'error'    ? 'rgba(255,0,60,0.7)' :
                           scans[key].status === 'scanning' ? '#ffd700' :
                           'rgba(0,255,65,0.7)',
                       }"
                     >{{ cfg.label }}</span>
                     <span v-if="scans[key].status === 'done'"  class="text-xs flex-shrink-0" style="color: #00ff41;">✓</span>
-                    <span v-if="scans[key].status === 'error'" class="text-xs flex-shrink-0" style="color: #ff3c5a;">✗</span>
+                    <span v-if="scans[key].status === 'error'" class="text-xs flex-shrink-0" style="color: #ff003c;">✗</span>
                   </div>
                 </div>
               </div>
@@ -260,20 +267,20 @@
                     <div
                       class="w-2 h-2 rounded-full flex-shrink-0"
                       :style="scanState.isStopped
-                        ? 'background: #ff3c5a; box-shadow: 0 0 6px #ff3c5a;'
+                        ? 'background: #ff003c; box-shadow: 0 0 6px #ff003c;'
                         : 'background: #00ff41; box-shadow: 0 0 8px #00ff41;'"
                     ></div>
                     <span
                       class="text-sm font-bold tracking-[0.2em] uppercase flex-shrink-0"
                       style="font-family: 'Orbitron', monospace;"
-                      :style="scanState.isStopped ? 'color: #ff3c5a;' : 'color: #00ff41;'"
+                      :style="scanState.isStopped ? 'color: #ff003c;' : 'color: #00ff41;'"
                     >
                       {{ scanState.isStopped ? 'Scan Stopped' : 'Scan Complete' }}
                     </span>
                     <span class="text-xs hidden md:inline truncate" style="color: rgba(0,255,65,0.3);">{{ targetUrl }}</span>
                   </div>
                   <div class="flex items-center gap-2 flex-shrink-0">
-                    <!-- Export -->
+                    <!-- Export TXT -->
                     <button
                       @click="exportTxt(targetUrl, scans, SCAN_CONFIGS)"
                       class="btn-matrix flex items-center gap-2 px-4 py-2 text-xs tracking-[0.15em] uppercase"
@@ -290,7 +297,26 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                       </svg>
-                      <span class="hidden sm:inline">EXPORT</span>
+                      <span class="hidden sm:inline">TXT</span>
+                    </button>
+                    <!-- Export JSON -->
+                    <button
+                      @click="exportJson(targetUrl, scans, SCAN_CONFIGS)"
+                      class="btn-matrix flex items-center gap-2 px-4 py-2 text-xs tracking-[0.15em] uppercase"
+                      style="
+                        background: rgba(0,255,65,0.06);
+                        border: 1px solid rgba(0,255,65,0.3);
+                        color: #00ff41;
+                        font-family: 'Orbitron', monospace;
+                        border-radius: 2px;
+                      "
+                      title="Download .json report"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                      </svg>
+                      <span class="hidden sm:inline">JSON</span>
                     </button>
                     <!-- New scan -->
                     <button
@@ -309,7 +335,7 @@
                 </div>
 
                 <!-- ── DNS ──────────────────────────────────────────────── -->
-                <ScanCard :config="SCAN_CONFIGS.dns" :scan="scans.dns">
+                <ScanCard :config="SCAN_CONFIGS.dns" :scan="scans.dns" @rerun="rerunScan('dns')">
                   <template #results="{ data }">
                     <div v-if="hasAnyRecord(data.records)" class="space-y-2">
                       <RecordGroup label="A Records (IPv4)"    :items="data.records?.A"    />
@@ -323,7 +349,7 @@
                 </ScanCard>
 
                 <!-- ── Ports ────────────────────────────────────────────── -->
-                <ScanCard :config="SCAN_CONFIGS.ports" :scan="scans.ports">
+                <ScanCard :config="SCAN_CONFIGS.ports" :scan="scans.ports" @rerun="rerunScan('ports')">
                   <template #results="{ data }">
                     <div v-if="data.ports && data.ports.length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(255,215,0,0.5);">
@@ -353,21 +379,21 @@
                 </ScanCard>
 
                 <!-- ── Firewall ──────────────────────────────────────────── -->
-                <ScanCard :config="SCAN_CONFIGS.firewall" :scan="scans.firewall">
+                <ScanCard :config="SCAN_CONFIGS.firewall" :scan="scans.firewall" @rerun="rerunScan('firewall')">
                   <template #results="{ data }">
                     <div class="flex flex-wrap items-center gap-4">
                       <div
                         class="flex items-center gap-2.5 px-4 py-2.5"
                         style="border-radius: 2px;"
                         :style="data.firewall?.detected
-                          ? 'background: rgba(255,60,90,0.08); border: 1px solid rgba(255,60,90,0.35);'
-                          : 'background: rgba(0,255,65,0.05); border: 1px solid rgba(0,255,65,0.7);'"
+                          ? 'background: rgba(255,0,60,0.08); border: 1px solid rgba(255,0,60,0.35); color: #ff003c;'
+                          : 'background: rgba(0,255,65,0.05); border: 1px solid rgba(0,255,65,0.7); color: #00ff41;'"
                       >
-                        <span class="text-base">{{ data.firewall?.detected ? '🔴' : '🟢' }}</span>
+                        <span class="text-base" aria-hidden="true">{{ data.firewall?.detected ? '&#9679;' : '&#9679;' }}</span>
                         <span
                           class="font-bold text-sm tracking-wider"
                           style="font-family: 'Orbitron', monospace;"
-                          :style="data.firewall?.detected ? 'color: #ff3c5a;' : 'color: #00ff41;'"
+                          :style="data.firewall?.detected ? 'color: #ff003c;' : 'color: #00ff41;'"
                         >
                           {{ data.firewall?.detected ? 'WAF DETECTED' : 'NO WAF' }}
                         </span>
@@ -391,7 +417,7 @@
                 </ScanCard>
 
                 <!-- ── Technologies ──────────────────────────────────────── -->
-                <ScanCard :config="SCAN_CONFIGS.technology" :scan="scans.technology">
+                <ScanCard :config="SCAN_CONFIGS.technology" :scan="scans.technology" @rerun="rerunScan('technology')">
                   <template #results="{ data }">
                     <div v-if="data.technologies && Object.keys(data.technologies).length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(191,0,255,0.5);">
@@ -415,7 +441,7 @@
                 </ScanCard>
 
                 <!-- ── Subdomains ────────────────────────────────────────── -->
-                <ScanCard :config="SCAN_CONFIGS.subdomains" :scan="scans.subdomains">
+                <ScanCard :config="SCAN_CONFIGS.subdomains" :scan="scans.subdomains" @rerun="rerunScan('subdomains')">
                   <template #results="{ data }">
                     <div v-if="data.subdomains && data.subdomains.length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(0,255,65,0.45);">
@@ -467,24 +493,55 @@ import MatrixBackground   from '../components/MatrixBackground.vue'
 import DisclaimerCard     from '../components/DisclaimerCard.vue'
 import ScanCard           from '../components/ScanCard.vue'
 import RecordGroup        from '../components/RecordGroup.vue'
-import { scanState, scans, SCAN_CONFIGS, runAllScans, stopScans, resetScans } from '../composables/useScanner.js'
-import { exportTxt }      from '../utils/exportReport.js'
+import { scanState, scans, SCAN_CONFIGS, runAllScans, runSingleScan, stopScans, resetScans, getSavedState, restoreSavedScans } from '../composables/useScanner.js'
+import { exportTxt, exportJson }      from '../utils/exportReport.js'
 
 // ── Disclaimer ────────────────────────────────────────────────────────────────
 const accepted = ref(false)
 function accept() { accepted.value = true }
 
+// ── Restore saved state ──────────────────────────────────────────────────────
+const savedState = getSavedState()
+if (savedState) {
+  accepted.value = true
+  targetUrl.value = savedState.url || ''
+  restoreSavedScans(savedState)
+}
+
 // ── Scan ──────────────────────────────────────────────────────────────────────
 const targetUrl    = ref('')
+const urlError     = ref('')
 const quickTargets = ['https://example.com', 'https://google.com']
 
+function validateUrl(url) {
+  if (!url.trim()) return 'URL is required'
+  const cleaned = url.trim()
+  try {
+    const withProto = cleaned.startsWith('http') ? cleaned : `https://${cleaned}`
+    const parsed = new URL(withProto)
+    if (!parsed.hostname || !parsed.hostname.includes('.')) return 'Invalid domain'
+    const privatePatterns = [/^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^localhost$/i, /^0\.0\.0\.0$/]
+    if (privatePatterns.some(p => p.test(parsed.hostname))) return 'Private/internal addresses are not allowed'
+    return ''
+  } catch {
+    return 'Invalid URL format'
+  }
+}
+
 async function start() {
-  if (!targetUrl.value.trim() || scanState.isScanning) return
+  if (scanState.isScanning) return
+  urlError.value = validateUrl(targetUrl.value)
+  if (urlError.value) return
   await runAllScans(targetUrl.value.trim())
 }
 
 function stop()  { stopScans() }
 function reset() { resetScans() }
+
+function rerunScan(key) {
+  if (scanState.isScanning) return
+  runSingleScan(key, targetUrl.value.trim())
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function hasAnyRecord(records) {

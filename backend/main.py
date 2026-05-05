@@ -1,10 +1,15 @@
 import re
+import asyncio
 import logging
 import time
+import ipaddress
 from urllib.parse import urlparse
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from config import settings
 from tools import check_tool
@@ -22,9 +27,13 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Matrix Scanner API", version="1.0.0")
 
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
@@ -32,6 +41,33 @@ app.add_middleware(
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+_PRIVATE_NETWORKS = [
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("169.254.0.0/16"),
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+
+def _is_private_ip(hostname: str) -> bool:
+    """Check if a hostname resolves to a private/internal IP."""
+    import socket
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+        for info in infos:
+            ip = ipaddress.ip_address(info[4][0])
+            for network in _PRIVATE_NETWORKS:
+                if ip in network:
+                    return True
+    except (socket.gaierror, ValueError):
+        pass
+    return False
+
 
 def _validate_url(raw: str) -> str:
     """Normalize and validate a URL. Returns the clean URL or raises 400."""
@@ -43,18 +79,26 @@ def _validate_url(raw: str) -> str:
     parsed = urlparse(url)
     if not parsed.netloc:
         raise HTTPException(status_code=400, detail="Invalid URL")
-    domain = parsed.netloc
+    domain = parsed.netloc.split(':')[0]
     if not re.match(
         r'^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?'
-        r'(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)*(:[0-9]{1,5})?$',
+        r'(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)*$',
         domain
     ):
         raise HTTPException(status_code=400, detail="Invalid domain")
+    if _is_private_ip(domain):
+        raise HTTPException(status_code=400, detail="Scanning private/internal IP addresses is not allowed")
     return url
 
 
 def _domain(url: str) -> str:
-    return urlparse(url).netloc
+    return urlparse(url).netloc.split(':')[0]
+
+
+async def _get_scan_url(request: Request) -> str:
+    """Dependency to extract and validate URL from form data."""
+    data = await request.form()
+    return _validate_url(data.get("url", ""))
 
 
 # ── Root / Health ─────────────────────────────────────────────────────────────
@@ -81,65 +125,70 @@ async def health():
 # ── Scan endpoints ────────────────────────────────────────────────────────────
 
 @app.post("/scan/dns")
-async def scan_dns(request: Request):
-    data = await request.form()
-    url = _validate_url(data.get("url", ""))
+@limiter.limit("30/minute")
+async def scan_dns(request: Request, url: str = Depends(_get_scan_url)):
     domain = _domain(url)
     try:
-        result = run_dnsrecon(domain)
+        result = await asyncio.to_thread(run_dnsrecon, domain)
         return {"success": True, "domain": domain, "records": result.get("records", {})}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"DNS scan error: {e}")
+        logger.error("DNS scan error: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/scan/ports")
-async def scan_ports(request: Request):
-    data = await request.form()
-    url = _validate_url(data.get("url", ""))
+@limiter.limit("20/minute")
+async def scan_ports(request: Request, url: str = Depends(_get_scan_url)):
     domain = _domain(url)
     try:
-        ports = run_nmap_scan(domain)
+        ports = await asyncio.to_thread(run_nmap_scan, domain)
         return {"success": True, "domain": domain, "ports": ports}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Port scan error: {e}")
+        logger.error("Port scan error: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/scan/firewall")
-async def scan_firewall_endpoint(request: Request):
-    data = await request.form()
-    url = _validate_url(data.get("url", ""))
+@limiter.limit("30/minute")
+async def scan_firewall_endpoint(request: Request, url: str = Depends(_get_scan_url)):
     try:
-        result = scan_firewall(url)
+        result = await asyncio.to_thread(scan_firewall, url)
         return {"success": True, "url": url, "firewall": result}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Firewall scan error: {e}")
+        logger.error("Firewall scan error: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/scan/technologies")
-async def scan_technologies_endpoint(request: Request):
-    data = await request.form()
-    url = _validate_url(data.get("url", ""))
+@limiter.limit("30/minute")
+async def scan_technologies_endpoint(request: Request, url: str = Depends(_get_scan_url)):
     try:
-        result = scan_technologies(url)
+        result = await asyncio.to_thread(scan_technologies, url)
         return {"success": True, "url": url, "technologies": result.get("technologies", {})}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Technology scan error: {e}")
+        logger.error("Technology scan error: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/scan/subdomains")
-async def scan_subdomains(request: Request):
-    data = await request.form()
-    url = _validate_url(data.get("url", ""))
+@limiter.limit("15/minute")
+async def scan_subdomains(request: Request, url: str = Depends(_get_scan_url)):
     domain = _domain(url)
     try:
-        subdomains = run_subfinder_scan(domain)
+        subdomains = await asyncio.to_thread(run_subfinder_scan, domain)
         return {"success": True, "domain": domain, "subdomains": subdomains}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Subdomain scan error: {e}")
+        logger.error("Subdomain scan error: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -147,7 +196,7 @@ async def scan_subdomains(request: Request):
 
 @app.exception_handler(Exception)
 async def global_error_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled error: {exc}")
+    logger.error("Unhandled error: %s", exc)
     return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
 

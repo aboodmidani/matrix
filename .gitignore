@@ -158,14 +158,13 @@ logs
 tmp/
 temp/
 
+# Scan results and reports
+backend/reports/
+
 # Database files
 *.db
 *.sqlite
 *.sqlite3
-
-# Scan results and temporary data
-results/
-temp/
 
 # API keys and secrets
 secrets/
