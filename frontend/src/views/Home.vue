@@ -2,43 +2,44 @@
   <div class="min-h-screen bg-black relative overflow-x-hidden" style="font-family: 'Share Tech Mono', monospace;">
     <MatrixBackground />
 
-    <!-- ── Page wrapper ──────────────────────────────────────────────────── -->
     <div class="relative z-10 min-h-screen flex flex-col">
 
-      <!-- ── Top bar ───────────────────────────────────────────────────── -->
+      <!-- Top bar -->
       <header class="border-b" style="border-color: rgba(0,255,65,0.1); background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);">
-        <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-2 h-2 rounded-full" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
             <span class="text-xs tracking-[0.3em] uppercase" style="font-family: 'Orbitron', monospace; color: rgba(0,255,65,0.6);">
-              Matrix Scanner
+              MatrixScanner
             </span>
           </div>
-          <span class="text-xs" style="color: rgba(0,255,65,0.7);">v1.0.0</span>
+          <div class="flex items-center gap-4">
+            <span class="text-xs hidden sm:inline" style="color: rgba(0,255,65,0.7);">Web Security Audit Platform</span>
+            <span class="text-xs" style="color: rgba(0,255,65,0.7);">v2.0.0</span>
+          </div>
         </div>
       </header>
 
-      <!-- ── Main content ──────────────────────────────────────────────── -->
-      <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-12">
+      <!-- Main content -->
+      <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
 
-        <!-- ── Hero ────────────────────────────────────────────────────── -->
-        <section class="text-center mb-12 fade-in-up">
-          <p class="text-xs tracking-[0.5em] uppercase mb-4" style="color: rgba(0,255,65,0.35);">
+        <!-- Hero -->
+        <section class="text-center mb-8 fade-in-up">
+          <p class="text-xs tracking-[0.5em] uppercase mb-3" style="color: rgba(0,255,65,0.35);">
             Web Security Assessment Platform
           </p>
           <h1
-            class="text-6xl sm:text-7xl font-black mb-2 glow-green"
+            class="text-5xl sm:text-6xl font-black mb-1 glow-green"
             style="font-family: 'Orbitron', monospace; color: #00ff41; letter-spacing: 0.12em; line-height: 1;"
           >
             MATRIX
           </h1>
           <h2
-            class="text-lg sm:text-xl font-bold tracking-[0.6em] mb-6"
+            class="text-base sm:text-lg font-bold tracking-[0.6em] mb-4"
             style="font-family: 'Orbitron', monospace; color: rgba(0,255,65,0.4);"
           >
             SCANNER
           </h2>
-          <!-- Divider -->
           <div class="flex items-center justify-center gap-4">
             <div class="h-px flex-1 max-w-32" style="background: linear-gradient(90deg, transparent, rgba(0,255,65,0.3));"></div>
             <div class="flex gap-1.5">
@@ -50,32 +51,28 @@
           </div>
         </section>
 
-        <!-- ── Disclaimer overlay ───────────────────────────────────────── -->
+        <!-- Disclaimer -->
         <DisclaimerCard v-if="!accepted" @accepted="accept" />
 
-        <!-- ── Scanner section ──────────────────────────────────────────── -->
+        <!-- Scanner section -->
         <Transition name="fade">
           <section v-if="accepted">
 
             <!-- Input card -->
             <div class="matrix-card bracket-corners mb-4">
-              <!-- Card header -->
               <div class="px-6 pt-5 pb-3 border-b" style="border-color: rgba(0,255,65,0.08);">
                 <div class="flex items-center gap-2">
                   <span class="w-1.5 h-1.5 rounded-full" style="background: #00ff41;"></span>
                   <span class="text-xs tracking-[0.25em] uppercase" style="color: rgba(0,255,65,0.4);">Target</span>
                 </div>
               </div>
-
-              <!-- Input row -->
               <div class="px-6 py-5">
                 <div class="flex flex-col sm:flex-row gap-3">
-                  <!-- URL field -->
                   <div class="flex-1 relative">
                     <span
                       class="absolute left-4 top-1/2 -translate-y-1/2 text-base select-none pointer-events-none"
                       style="color: rgba(0,255,65,0.4);"
-                    >›</span>
+                    >&#8250;</span>
                     <input
                       v-model="targetUrl"
                       type="text"
@@ -94,10 +91,7 @@
                       @keyup.enter="start"
                     />
                   </div>
-
-                  <!-- Action buttons -->
                   <div class="flex gap-2">
-                    <!-- SCAN / SCANNING -->
                     <button
                       v-if="!scanState.isScanning"
                       @click="start"
@@ -115,8 +109,6 @@
                     >
                       [ SCAN ]
                     </button>
-
-                    <!-- STOP button — shown while scanning -->
                     <template v-if="scanState.isScanning">
                       <button
                         disabled
@@ -146,11 +138,8 @@
                         "
                         title="Stop all scans"
                       >
-                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                          <rect x="6" y="6" width="12" height="12" rx="1"/>
-                        </svg>
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
                         <span class="hidden sm:inline">STOP</span>
-                        <span class="sm:hidden">STOP</span>
                       </button>
                     </template>
                   </div>
@@ -172,17 +161,15 @@
                     {{ t.replace('https://', '') }}
                   </button>
                 </div>
-                <!-- Validation error -->
                 <p v-if="urlError" class="text-xs mt-2" style="color: var(--matrix-red);">
                   {{ urlError }}
                 </p>
               </div>
             </div>
 
-            <!-- ── Progress panel ──────────────────────────────────────── -->
+            <!-- Progress panel -->
             <Transition name="slide-down">
               <div v-if="scanState.isScanning || (scanState.done && scanState.isStopped)" class="matrix-card mb-4 overflow-hidden">
-                <!-- Header -->
                 <div class="px-6 pt-4 pb-3 border-b flex items-center justify-between" style="border-color: rgba(0,255,65,0.08);">
                   <div class="flex items-center gap-2">
                     <span
@@ -199,8 +186,6 @@
                     {{ scanState.completed }}/{{ scanState.total }}
                   </span>
                 </div>
-
-                <!-- Progress bar -->
                 <div class="px-6 pt-4 pb-2">
                   <div class="flex items-center justify-between mb-1.5">
                     <span class="text-xs truncate max-w-xs" style="color: rgba(0,255,65,0.55);">
@@ -219,9 +204,7 @@
                     ></div>
                   </div>
                 </div>
-
-                <!-- Per-scan status grid -->
-                <div class="px-6 pb-5 pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <div class="px-6 pb-5 pt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                   <div
                     v-for="(cfg, key) in SCAN_CONFIGS"
                     :key="key"
@@ -250,14 +233,14 @@
                           'rgba(0,255,65,0.7)',
                       }"
                     >{{ cfg.label }}</span>
-                    <span v-if="scans[key].status === 'done'"  class="text-xs flex-shrink-0" style="color: #00ff41;">✓</span>
-                    <span v-if="scans[key].status === 'error'" class="text-xs flex-shrink-0" style="color: #ff003c;">✗</span>
+                    <span v-if="scans[key].status === 'done'"  class="text-xs flex-shrink-0" style="color: #00ff41;">&#10003;</span>
+                    <span v-if="scans[key].status === 'error'" class="text-xs flex-shrink-0" style="color: #ff003c;">&#10007;</span>
                   </div>
                 </div>
               </div>
             </Transition>
 
-            <!-- ── Results ─────────────────────────────────────────────── -->
+            <!-- Results -->
             <Transition name="fade">
               <section v-if="scanState.done" class="space-y-3 fade-in-up">
 
@@ -280,61 +263,21 @@
                     <span class="text-xs hidden md:inline truncate" style="color: rgba(0,255,65,0.3);">{{ targetUrl }}</span>
                   </div>
                   <div class="flex items-center gap-2 flex-shrink-0">
-                    <!-- Export TXT -->
-                    <button
-                      @click="exportTxt(targetUrl, scans, SCAN_CONFIGS)"
-                      class="btn-matrix flex items-center gap-2 px-4 py-2 text-xs tracking-[0.15em] uppercase"
-                      style="
-                        background: rgba(0,255,65,0.06);
-                        border: 1px solid rgba(0,255,65,0.3);
-                        color: #00ff41;
-                        font-family: 'Orbitron', monospace;
-                        border-radius: 2px;
-                      "
-                      title="Download .txt report"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                      </svg>
+                    <button @click="exportTxt(targetUrl, scans, SCAN_CONFIGS)" class="btn-matrix flex items-center gap-2 px-4 py-2 text-xs tracking-[0.15em] uppercase" style="background: rgba(0,255,65,0.06); border: 1px solid rgba(0,255,65,0.3); color: #00ff41; font-family: 'Orbitron', monospace; border-radius: 2px;" title="Download .txt report">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                       <span class="hidden sm:inline">TXT</span>
                     </button>
-                    <!-- Export JSON -->
-                    <button
-                      @click="exportJson(targetUrl, scans, SCAN_CONFIGS)"
-                      class="btn-matrix flex items-center gap-2 px-4 py-2 text-xs tracking-[0.15em] uppercase"
-                      style="
-                        background: rgba(0,255,65,0.06);
-                        border: 1px solid rgba(0,255,65,0.3);
-                        color: #00ff41;
-                        font-family: 'Orbitron', monospace;
-                        border-radius: 2px;
-                      "
-                      title="Download .json report"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                      </svg>
+                    <button @click="exportJson(targetUrl, scans, SCAN_CONFIGS)" class="btn-matrix flex items-center gap-2 px-4 py-2 text-xs tracking-[0.15em] uppercase" style="background: rgba(0,255,65,0.06); border: 1px solid rgba(0,255,65,0.3); color: #00ff41; font-family: 'Orbitron', monospace; border-radius: 2px;" title="Download .json report">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                       <span class="hidden sm:inline">JSON</span>
                     </button>
-                    <!-- New scan -->
-                    <button
-                      @click="reset"
-                      class="btn-matrix px-4 py-2 text-xs tracking-[0.15em] uppercase"
-                      style="
-                        border: 1px solid rgba(0,255,65,0.7);
-                        color: rgba(0,255,65,0.55);
-                        font-family: 'Orbitron', monospace;
-                        border-radius: 2px;
-                      "
-                    >
+                    <button @click="reset" class="btn-matrix px-4 py-2 text-xs tracking-[0.15em] uppercase" style="border: 1px solid rgba(0,255,65,0.7); color: rgba(0,255,65,0.55); font-family: 'Orbitron', monospace; border-radius: 2px;">
                       NEW SCAN
                     </button>
                   </div>
                 </div>
 
-                <!-- ── DNS ──────────────────────────────────────────────── -->
+                <!-- DNS -->
                 <ScanCard :config="SCAN_CONFIGS.dns" :scan="scans.dns" @rerun="rerunScan('dns')">
                   <template #results="{ data }">
                     <div v-if="hasAnyRecord(data.records)" class="space-y-2">
@@ -343,12 +286,15 @@
                       <RecordGroup label="MX Records"          :items="data.records?.MX"   />
                       <RecordGroup label="NS Records"          :items="data.records?.NS"   />
                       <RecordGroup label="TXT Records"         :items="data.records?.TXT"  />
+                      <RecordGroup label="SOA Records"         :items="data.records?.SOA"  />
+                      <RecordGroup label="SRV Records"         :items="data.records?.SRV"  />
+                      <RecordGroup label="CNAME Records"       :items="data.records?.CNAME" />
                     </div>
                     <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No DNS records found.</p>
                   </template>
                 </ScanCard>
 
-                <!-- ── Ports ────────────────────────────────────────────── -->
+                <!-- Ports -->
                 <ScanCard :config="SCAN_CONFIGS.ports" :scan="scans.ports" @rerun="rerunScan('ports')">
                   <template #results="{ data }">
                     <div v-if="data.ports && data.ports.length">
@@ -356,20 +302,15 @@
                         {{ data.ports.length }} open port{{ data.ports.length !== 1 ? 's' : '' }} detected
                       </p>
                       <table class="w-full matrix-table">
-                        <thead>
-                          <tr>
-                            <th class="text-left">Port</th>
-                            <th class="text-left">Protocol</th>
-                            <th class="text-left">Service</th>
-                            <th class="text-left hidden sm:table-cell">Version</th>
-                          </tr>
-                        </thead>
+                        <thead><tr>
+                          <th class="text-left">Port</th><th class="text-left">Protocol</th><th class="text-left">Service</th><th class="text-left hidden sm:table-cell">Version</th>
+                        </tr></thead>
                         <tbody>
                           <tr v-for="p in data.ports" :key="p.port">
                             <td><span class="font-bold" style="color: #ffd700;">{{ p.port }}</span></td>
                             <td style="color: rgba(0,255,65,0.55);">{{ p.protocol }}</td>
                             <td style="color: #00ff41;">{{ p.service }}</td>
-                            <td class="hidden sm:table-cell" style="color: rgba(0,255,65,0.35); font-size: 0.75rem;">{{ p.version || '—' }}</td>
+                            <td class="hidden sm:table-cell" style="color: rgba(0,255,65,0.35); font-size: 0.75rem;">{{ p.version || '&mdash;' }}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -378,21 +319,17 @@
                   </template>
                 </ScanCard>
 
-                <!-- ── Firewall ──────────────────────────────────────────── -->
+                <!-- Firewall -->
                 <ScanCard :config="SCAN_CONFIGS.firewall" :scan="scans.firewall" @rerun="rerunScan('firewall')">
                   <template #results="{ data }">
                     <div class="flex flex-wrap items-center gap-4">
-                      <div
-                        class="flex items-center gap-2.5 px-4 py-2.5"
-                        style="border-radius: 2px;"
+                      <div class="flex items-center gap-2.5 px-4 py-2.5" style="border-radius: 2px;"
                         :style="data.firewall?.detected
                           ? 'background: rgba(255,0,60,0.08); border: 1px solid rgba(255,0,60,0.35); color: #ff003c;'
                           : 'background: rgba(0,255,65,0.05); border: 1px solid rgba(0,255,65,0.7); color: #00ff41;'"
                       >
-                        <span class="text-base" aria-hidden="true">{{ data.firewall?.detected ? '&#9679;' : '&#9679;' }}</span>
-                        <span
-                          class="font-bold text-sm tracking-wider"
-                          style="font-family: 'Orbitron', monospace;"
+                        <span class="text-base" aria-hidden="true">&#9679;</span>
+                        <span class="font-bold text-sm tracking-wider" style="font-family: 'Orbitron', monospace;"
                           :style="data.firewall?.detected ? 'color: #ff003c;' : 'color: #00ff41;'"
                         >
                           {{ data.firewall?.detected ? 'WAF DETECTED' : 'NO WAF' }}
@@ -401,7 +338,7 @@
                       <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
                         <div>
                           <span style="color: rgba(0,255,65,0.35);">NAME </span>
-                          <span style="color: #00ff41;">{{ data.firewall?.waf_name || '—' }}</span>
+                          <span style="color: #00ff41;">{{ data.firewall?.waf_name || '&mdash;' }}</span>
                         </div>
                         <div v-if="data.firewall?.manufacturer && data.firewall.manufacturer !== data.firewall.waf_name">
                           <span style="color: rgba(0,255,65,0.35);">VENDOR </span>
@@ -409,14 +346,14 @@
                         </div>
                         <div>
                           <span style="color: rgba(0,255,65,0.35);">CONFIDENCE </span>
-                          <span style="color: #ffd700;">{{ data.firewall?.confidence || '—' }}</span>
+                          <span style="color: #ffd700;">{{ data.firewall?.confidence || '&mdash;' }}</span>
                         </div>
                       </div>
                     </div>
                   </template>
                 </ScanCard>
 
-                <!-- ── Technologies ──────────────────────────────────────── -->
+                <!-- Technology -->
                 <ScanCard :config="SCAN_CONFIGS.technology" :scan="scans.technology" @rerun="rerunScan('technology')">
                   <template #results="{ data }">
                     <div v-if="data.technologies && Object.keys(data.technologies).length">
@@ -424,9 +361,7 @@
                         {{ Object.keys(data.technologies).length }} technologies identified
                       </p>
                       <div class="flex flex-wrap gap-2">
-                        <div
-                          v-for="(info, name) in data.technologies"
-                          :key="name"
+                        <div v-for="(info, name) in data.technologies" :key="name"
                           class="chip"
                           style="color: #bf00ff; background: rgba(191,0,255,0.06); border-color: rgba(191,0,255,0.22);"
                         >
@@ -440,7 +375,7 @@
                   </template>
                 </ScanCard>
 
-                <!-- ── Subdomains ────────────────────────────────────────── -->
+                <!-- Subdomains -->
                 <ScanCard :config="SCAN_CONFIGS.subdomains" :scan="scans.subdomains" @rerun="rerunScan('subdomains')">
                   <template #results="{ data }">
                     <div v-if="data.subdomains && data.subdomains.length">
@@ -448,18 +383,218 @@
                         {{ data.subdomains.length }} subdomain{{ data.subdomains.length !== 1 ? 's' : '' }} discovered
                       </p>
                       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                        <div
-                          v-for="s in data.subdomains"
-                          :key="s.subdomain"
+                        <div v-for="s in data.subdomains" :key="s.subdomain"
                           class="flex items-center gap-2 px-3 py-1.5 text-xs truncate"
                           style="background: rgba(0,255,65,0.03); border: 1px solid rgba(0,255,65,0.1); border-radius: 2px; color: #00ff41;"
                         >
-                          <span style="color: rgba(0,255,65,0.3);">›</span>
+                          <span style="color: rgba(0,255,65,0.3);">&#8250;</span>
                           <span class="truncate">{{ s.subdomain }}</span>
                         </div>
                       </div>
                     </div>
                     <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No subdomains discovered.</p>
+                  </template>
+                </ScanCard>
+
+                <!-- Live Status -->
+                <ScanCard :config="SCAN_CONFIGS.live" :scan="scans.live" @rerun="rerunScan('live')">
+                  <template #results="{ data }">
+                    <div class="flex flex-wrap items-center gap-4">
+                      <div class="flex items-center gap-2.5 px-4 py-2.5" style="border-radius: 2px;"
+                        :style="data.live?.alive
+                          ? 'background: rgba(0,255,65,0.05); border: 1px solid rgba(0,255,65,0.7); color: #00ff41;'
+                          : 'background: rgba(255,0,60,0.08); border: 1px solid rgba(255,0,60,0.35); color: #ff003c;'"
+                      >
+                        <span class="w-2 h-2 rounded-full" :style="data.live?.alive
+                          ? 'background: #00ff41; box-shadow: 0 0 6px #00ff41;'
+                          : 'background: #ff003c; box-shadow: 0 0 6px #ff003c;'"></span>
+                        <span class="font-bold text-sm tracking-wider" style="font-family: 'Orbitron', monospace;">
+                          {{ data.live?.alive ? 'ONLINE' : 'OFFLINE / UNREACHABLE' }}
+                        </span>
+                      </div>
+                      <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                        <div>
+                          <span style="color: rgba(0,255,65,0.35);">PING </span>
+                          <span style="color: #00ff41;">{{ data.live?.ping_time_ms != null ? data.live.ping_time_ms + ' ms' : '&mdash;' }}</span>
+                        </div>
+                        <div>
+                          <span style="color: rgba(0,255,65,0.35);">HTTP </span>
+                          <span :style="data.live?.http_status && data.live.http_status < 400
+                            ? 'color: #00ff41;'
+                            : data.live?.http_status && data.live.http_status < 500
+                              ? 'color: #ffd700;'
+                              : 'color: #ff003c;'">
+                            {{ data.live?.http_status || '&mdash;' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </ScanCard>
+
+                <!-- SSL -->
+                <ScanCard :config="SCAN_CONFIGS.ssl" :scan="scans.ssl" @rerun="rerunScan('ssl')">
+                  <template #results="{ data }">
+                    <div v-if="data.ssl && data.ssl.certificate && data.ssl.certificate.subject">
+                      <div class="flex flex-wrap items-center gap-3 mb-4">
+                        <div class="flex items-center gap-2 px-4 py-2" style="border-radius: 2px;"
+                          :style="data.ssl.certificate.expired
+                            ? 'background: rgba(255,0,60,0.08); border: 1px solid rgba(255,0,60,0.35);'
+                            : data.ssl.certificate.days_remaining < 30
+                              ? 'background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.35);'
+                              : 'background: rgba(0,255,65,0.05); border: 1px solid rgba(0,255,65,0.7);'"
+                        >
+                          <span class="font-bold text-sm tracking-wider" style="font-family: 'Orbitron', monospace;"
+                            :style="data.ssl.certificate.expired
+                              ? 'color: #ff003c;'
+                              : data.ssl.certificate.days_remaining < 30
+                                ? 'color: #ffd700;'
+                                : 'color: #00ff41;'"
+                          >
+                            {{ data.ssl.certificate.expired ? 'EXPIRED' : data.ssl.certificate.days_remaining + ' days' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div><span style="color: rgba(0,255,65,0.35);">SUBJECT</span><br><span style="color: #00ff41;">{{ data.ssl.certificate.subject }}</span></div>
+                        <div><span style="color: rgba(0,255,65,0.35);">ISSUER</span><br><span style="color: #00ff41;">{{ data.ssl.certificate.issuer }}</span></div>
+                        <div><span style="color: rgba(0,255,65,0.35);">SERIAL</span><br><span style="color: rgba(0,255,65,0.7); font-size: 0.7rem;">{{ data.ssl.certificate.serial }}</span></div>
+                        <div><span style="color: rgba(0,255,65,0.35);">EXPIRES</span><br><span style="color: rgba(0,255,65,0.7);">{{ data.ssl.certificate.not_after }}</span></div>
+                        <div class="sm:col-span-2" v-if="data.ssl.certificate.san && data.ssl.certificate.san.length">
+                          <span style="color: rgba(0,255,65,0.35);">SAN ({{ data.ssl.certificate.san.length }})</span><br>
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            <span v-for="s in data.ssl.certificate.san" :key="s" class="chip" style="color: rgba(0,255,65,0.6); background: rgba(0,255,65,0.04); border-color: rgba(0,255,65,0.12); font-size: 0.7rem;">{{ s }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else-if="data.ssl && data.ssl.error" class="flex items-start gap-2 py-2">
+                      <span class="text-red-400 text-lg leading-none">&#9888;</span>
+                      <p class="text-red-400 text-xs">{{ data.ssl.error }}</p>
+                    </div>
+                    <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No SSL certificate data available.</p>
+                  </template>
+                </ScanCard>
+
+                <!-- Security Headers -->
+                <ScanCard :config="SCAN_CONFIGS.headers" :scan="scans.headers" @rerun="rerunScan('headers')">
+                  <template #results="{ data }">
+                    <div v-if="data.headers">
+                      <div class="flex items-center gap-4 mb-4 text-sm">
+                        <span style="color: rgba(0,255,65,0.5);">
+                          Security headers:
+                          <span style="color: #00ff41;">{{ data.headers.security_headers_found }}</span>
+                          /
+                          <span style="color: rgba(0,255,65,0.5);">{{ data.headers.security_headers_total }}</span>
+                        </span>
+                        <span v-if="data.headers.missing_security_headers && data.headers.missing_security_headers.length" class="text-xs" style="color: #ff003c;">
+                          {{ data.headers.missing_security_headers.length }} missing
+                        </span>
+                      </div>
+                      <div class="space-y-1.5 max-h-64 overflow-y-auto" style="scrollbar-width: thin;">
+                        <div v-for="(report, hdr) in data.headers.security_report" :key="hdr"
+                          class="flex items-start gap-2 px-3 py-2 text-xs"
+                          :style="report.present
+                            ? 'background: rgba(0,255,65,0.03); border-left: 2px solid rgba(0,255,65,0.4);'
+                            : 'background: rgba(255,0,60,0.03); border-left: 2px solid rgba(255,0,60,0.4);'"
+                        >
+                          <span :style="report.present ? 'color: #00ff41;' : 'color: #ff003c;'">
+                            {{ report.present ? '&#10003;' : '&#10007;' }}
+                          </span>
+                          <div>
+                            <span style="color: #ffd700;">{{ hdr }}</span>
+                            <p v-if="report.value" style="color: rgba(0,255,65,0.5); word-break: break-all;">{{ report.value }}</p>
+                            <p v-else style="color: rgba(255,0,60,0.5);">MISSING</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No header data available.</p>
+                  </template>
+                </ScanCard>
+
+                <!-- Crawl -->
+                <ScanCard :config="SCAN_CONFIGS.crawl" :scan="scans.crawl" @rerun="rerunScan('crawl')">
+                  <template #results="{ data }">
+                    <div v-if="data.crawl">
+                      <div class="flex flex-wrap gap-4 mb-4">
+                        <span class="text-xs px-3 py-1.5" style="background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.12); border-radius: 2px; color: rgba(0,255,65,0.7);">URLs: <span style="color: #00ff41;">{{ (data.crawl.urls || []).length }}</span></span>
+                        <span class="text-xs px-3 py-1.5" style="background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.12); border-radius: 2px; color: rgba(0,255,65,0.7);">Links: <span style="color: #00ff41;">{{ (data.crawl.links || []).length }}</span></span>
+                        <span class="text-xs px-3 py-1.5" style="background: rgba(191,0,255,0.04); border: 1px solid rgba(191,0,255,0.12); border-radius: 2px; color: rgba(191,0,255,0.7);">JS: <span style="color: #bf00ff;">{{ (data.crawl.js_files || []).length }}</span></span>
+                        <span class="text-xs px-3 py-1.5" style="background: rgba(255,215,0,0.04); border: 1px solid rgba(255,215,0,0.12); border-radius: 2px; color: rgba(255,215,0,0.7);">Forms: <span style="color: #ffd700;">{{ (data.crawl.forms || []).length }}</span></span>
+                        <span class="text-xs px-3 py-1.5" style="background: rgba(0,191,255,0.04); border: 1px solid rgba(0,191,255,0.12); border-radius: 2px; color: rgba(0,191,255,0.7);">Emails: <span style="color: #00bfff;">{{ (data.crawl.emails || []).length }}</span></span>
+                        <span class="text-xs px-3 py-1.5" style="background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.12); border-radius: 2px; color: rgba(0,255,65,0.7);">Comments: <span style="color: #00ff41;">{{ (data.crawl.comments || []).length }}</span></span>
+                      </div>
+                      <div v-if="data.crawl.links && data.crawl.links.length" class="max-h-48 overflow-y-auto space-y-1">
+                        <div v-for="link in data.crawl.links.slice(0, 30)" :key="link" class="text-xs truncate" style="color: rgba(0,255,65,0.5);">
+                          <span style="color: rgba(0,255,65,0.3);">&#8250;</span> {{ link }}
+                        </div>
+                        <p v-if="data.crawl.links.length > 30" class="text-xs mt-1" style="color: rgba(0,255,65,0.3);">... and {{ data.crawl.links.length - 30 }} more</p>
+                      </div>
+                    </div>
+                    <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No crawl data available.</p>
+                  </template>
+                </ScanCard>
+
+                <!-- Directories -->
+                <ScanCard :config="SCAN_CONFIGS.directories" :scan="scans.directories" @rerun="rerunScan('directories')">
+                  <template #results="{ data }">
+                    <div v-if="data.directories">
+                      <p class="text-xs mb-3" style="color: rgba(0,255,65,0.45);">
+                        Scanned {{ data.directories.total_scanned }} paths
+                        <span v-if="data.directories.found && data.directories.found.length">
+                          &mdash; <span style="color: #ffd700;">{{ data.directories.found.length }} found</span>
+                        </span>
+                      </p>
+                      <div v-if="data.directories.found && data.directories.found.length" class="space-y-1">
+                        <div v-for="d in data.directories.found" :key="d.path"
+                          class="flex items-center gap-2 px-3 py-1.5 text-xs"
+                          style="background: rgba(0,255,65,0.03); border: 1px solid rgba(0,255,65,0.07); border-radius: 2px;"
+                        >
+                          <span :style="{
+                            color: d.status < 300 ? '#00ff41' : d.status < 400 ? '#ffd700' : d.status < 500 ? '#ff003c' : 'rgba(0,255,65,0.5)',
+                          }">{{ d.path }}</span>
+                          <span class="ml-auto" style="color: rgba(0,255,65,0.35);">{{ d.status }}</span>
+                        </div>
+                      </div>
+                      <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No interesting paths found.</p>
+                    </div>
+                    <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No directory scan data available.</p>
+                  </template>
+                </ScanCard>
+
+                <!-- DNS Extended -->
+                <ScanCard :config="SCAN_CONFIGS.dnsExtended" :scan="scans.dnsExtended" @rerun="rerunScan('dnsExtended')">
+                  <template #results="{ data }">
+                    <div v-if="data.dns_extended">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="px-3 py-2" style="background: rgba(0,255,65,0.03); border: 1px solid rgba(0,255,65,0.07); border-radius: 2px;">
+                          <span style="color: rgba(0,255,65,0.35);">CAA Records</span><br>
+                          <span v-if="data.dns_extended.caa_records && data.dns_extended.caa_records.length" style="color: #00ff41;">
+                            {{ data.dns_extended.caa_records.join(', ') }}
+                          </span>
+                          <span v-else style="color: rgba(0,255,65,0.3);">None found</span>
+                        </div>
+                        <div class="px-3 py-2" style="background: rgba(0,255,65,0.03); border: 1px solid rgba(0,255,65,0.07); border-radius: 2px;">
+                          <span style="color: rgba(0,255,65,0.35);">DNSSEC</span><br>
+                          <span :style="data.dns_extended.dnssec ? 'color: #00ff41;' : 'color: rgba(0,255,65,0.3);'">
+                            {{ data.dns_extended.dnssec ? 'Enabled' : 'Not detected' }}
+                          </span>
+                        </div>
+                        <div class="px-3 py-2" style="background: rgba(0,255,65,0.03); border: 1px solid rgba(0,255,65,0.07); border-radius: 2px;">
+                          <span style="color: rgba(0,255,65,0.35);">Zone Transfer</span><br>
+                          <span :style="{
+                            color: data.dns_extended.zone_transfer === 'vulnerable' ? '#ff003c' :
+                                   data.dns_extended.zone_transfer === 'secure' ? '#00ff41' : 'rgba(0,255,65,0.3)',
+                          }">
+                            {{ data.dns_extended.zone_transfer === 'vulnerable' ? 'VULNERABLE' :
+                               data.dns_extended.zone_transfer === 'secure' ? 'Secure' :
+                               data.dns_extended.zone_transfer || 'Unknown' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <p v-else class="text-xs py-2" style="color: rgba(0,255,65,0.3);">No extended DNS data available.</p>
                   </template>
                 </ScanCard>
 
@@ -471,15 +606,17 @@
 
       </main>
 
-      <!-- ── Footer ────────────────────────────────────────────────────── -->
+      <!-- Footer -->
       <footer class="border-t py-4" style="border-color: rgba(0,255,65,0.08); background: rgba(0,0,0,0.5);">
-        <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p class="text-xs" style="color: rgba(0,255,65,0.7);">
-            Matrix Scanner — For authorized use only
+            MatrixScanner &mdash; For authorized use only
           </p>
-          <p class="text-xs" style="color: rgba(0,255,65,0.7);">
-            DNS · Ports · Firewall · Technologies · Subdomains
-          </p>
+          <div class="flex flex-wrap items-center gap-x-4 text-xs" style="color: rgba(0,255,65,0.5);">
+            <span>DNS &middot; Ports &middot; WAF &middot; Tech &middot; Subdomains</span>
+            <span class="hidden sm:inline">&middot;</span>
+            <span>SSL &middot; Headers &middot; Crawl &middot; Dirs &middot; DNS-X</span>
+          </div>
         </div>
       </footer>
 
@@ -496,22 +633,19 @@ import RecordGroup        from '../components/RecordGroup.vue'
 import { scanState, scans, SCAN_CONFIGS, runAllScans, runSingleScan, stopScans, resetScans, getSavedState, restoreSavedScans } from '../composables/useScanner.js'
 import { exportTxt, exportJson }      from '../utils/exportReport.js'
 
-// ── Disclaimer ────────────────────────────────────────────────────────────────
+const targetUrl    = ref('')
+const urlError     = ref('')
+const quickTargets = ['https://example.com', 'https://google.com', 'https://github.com', 'https://stackoverflow.com']
+
 const accepted = ref(false)
 function accept() { accepted.value = true }
 
-// ── Restore saved state ──────────────────────────────────────────────────────
 const savedState = getSavedState()
 if (savedState) {
   accepted.value = true
   targetUrl.value = savedState.url || ''
   restoreSavedScans(savedState)
 }
-
-// ── Scan ──────────────────────────────────────────────────────────────────────
-const targetUrl    = ref('')
-const urlError     = ref('')
-const quickTargets = ['https://example.com', 'https://google.com']
 
 function validateUrl(url) {
   if (!url.trim()) return 'URL is required'
@@ -543,7 +677,6 @@ function rerunScan(key) {
   runSingleScan(key, targetUrl.value.trim())
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function hasAnyRecord(records) {
   if (!records) return false
   return Object.values(records).some(arr => Array.isArray(arr) && arr.length > 0)

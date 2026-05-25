@@ -3,8 +3,6 @@ import { reactive } from 'vue'
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const STORAGE_KEY = 'matrix-scanner-state'
 
-// ── State ─────────────────────────────────────────────────────────────────────
-
 export const scanState = reactive({
   isScanning:  false,
   isStopped:   false,
@@ -21,23 +19,29 @@ export const scans = reactive({
   firewall:   { status: 'idle', data: null, error: null },
   technology: { status: 'idle', data: null, error: null },
   subdomains: { status: 'idle', data: null, error: null },
+  live:       { status: 'idle', data: null, error: null },
+  ssl:        { status: 'idle', data: null, error: null },
+  headers:    { status: 'idle', data: null, error: null },
+  crawl:      { status: 'idle', data: null, error: null },
+  directories:{ status: 'idle', data: null, error: null },
+  dnsExtended:{ status: 'idle', data: null, error: null },
 })
 
-// ── Config ────────────────────────────────────────────────────────────────────
-
 export const SCAN_CONFIGS = {
-  dns:        { label: 'DNS Reconnaissance',  endpoint: '/scan/dns',          icon: 'A', color: 'blue'   },
-  ports:      { label: 'Port Scan (nmap)',     endpoint: '/scan/ports',        icon: 'P', color: 'yellow' },
-  firewall:   { label: 'Firewall / WAF',       endpoint: '/scan/firewall',     icon: 'F', color: 'red'    },
-  technology: { label: 'Technologies',         endpoint: '/scan/technologies', icon: 'T', color: 'purple' },
-  subdomains: { label: 'Subdomain Discovery',  endpoint: '/scan/subdomains',   icon: 'S', color: 'green'  },
+  dns:        { label: 'DNS Reconnaissance',    endpoint: '/scan/dns',          icon: 'A', color: 'blue'   },
+  ports:      { label: 'Port Scan',              endpoint: '/scan/ports',        icon: 'P', color: 'yellow' },
+  firewall:   { label: 'Firewall / WAF',         endpoint: '/scan/firewall',     icon: 'F', color: 'red'    },
+  technology: { label: 'Fingerprinting',         endpoint: '/scan/technologies', icon: 'T', color: 'purple' },
+  subdomains: { label: 'Subdomain Discovery',    endpoint: '/scan/subdomains',   icon: 'S', color: 'green'  },
+  live:       { label: 'Live Status',            endpoint: '/scan/live',         icon: 'L', color: 'cyan'   },
+  ssl:        { label: 'SSL/TLS Certificate',    endpoint: '/scan/ssl',          icon: 'Z', color: 'yellow' },
+  headers:    { label: 'Security Headers',        endpoint: '/scan/headers',     icon: 'H', color: 'blue'   },
+  crawl:      { label: 'Web Crawl',              endpoint: '/scan/crawl',        icon: 'C', color: 'purple' },
+  directories:{ label: 'Directory Scan',          endpoint: '/scan/directories', icon: 'D', color: 'red'    },
+  dnsExtended:{ label: 'DNS Extended (CAA/PTR)',  endpoint: '/scan/dns-extended',icon: 'X', color: 'green'  },
 }
 
-// ── Abort controller (stop scan) ──────────────────────────────────────────────
-
 let _abortController = null
-
-// ── Internal helpers ──────────────────────────────────────────────────────────
 
 function updateCurrentScan() {
   const running = Object.entries(scans)
@@ -47,7 +51,7 @@ function updateCurrentScan() {
 }
 
 function updateProgress() {
-  const keys    = Object.keys(SCAN_CONFIGS)
+  const keys   = Object.keys(SCAN_CONFIGS)
   const done    = keys.filter(k => scans[k].status === 'done' || scans[k].status === 'error').length
   const scanning = keys.filter(k => scans[k].status === 'scanning').length
   scanState.completed = done
@@ -58,7 +62,6 @@ function updateProgress() {
 }
 
 async function _runScan(key, url, signal) {
-  // Skip if already aborted before this scan starts
   if (signal.aborted) {
     scans[key].status = 'error'
     scans[key].error  = 'Scan stopped by user'
@@ -73,7 +76,7 @@ async function _runScan(key, url, signal) {
   updateCurrentScan()
   updateProgress()
 
-  const SCAN_TIMEOUT = 120000 // 2 minutes per scan
+  const SCAN_TIMEOUT = 120000
 
   try {
     const body = new URLSearchParams({ url })
@@ -104,8 +107,6 @@ async function _runScan(key, url, signal) {
   updateCurrentScan()
   updateProgress()
 }
-
-// ── Public API ────────────────────────────────────────────────────────────────
 
 export async function runAllScans(url) {
   _abortController = new AbortController()
@@ -188,8 +189,6 @@ export function resetScans() {
   _clearSavedState()
 }
 
-// ── LocalStorage persistence ─────────────────────────────────────────────────
-
 function _saveState(url) {
   try {
     const saved = {
@@ -221,7 +220,6 @@ export function getSavedState() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const saved = JSON.parse(raw)
-    // Expire after 1 hour
     if (Date.now() - saved.timestamp > 3600000) {
       _clearSavedState()
       return null

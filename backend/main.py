@@ -18,6 +18,12 @@ from scans.port_scan import run_nmap_scan
 from scans.firewall_scan import scan_firewall
 from scans.technology_scan import scan_technologies
 from scans.subdomain_scan import run_subfinder_scan
+from scanners.live_scan import scan_live
+from scanners.ssl_scan import scan_ssl
+from scanners.header_scan import scan_headers
+from scanners.crawl_scan import scan_crawl
+from scanners.directory_scan import scan_directories
+from scanners.dns_extended import scan_dns_extended
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper()),
@@ -25,7 +31,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Matrix Scanner API", version="1.0.0")
+app = FastAPI(title="Matrix Scanner API", version="2.0.0")
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -38,9 +44,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
-
-
-# ── Helpers ──────────────────────────────────────────────────────────────────
 
 _PRIVATE_NETWORKS = [
     ipaddress.ip_network("127.0.0.0/8"),
@@ -55,7 +58,6 @@ _PRIVATE_NETWORKS = [
 
 
 def _is_private_ip(hostname: str) -> bool:
-    """Check if a hostname resolves to a private/internal IP."""
     import socket
     try:
         infos = socket.getaddrinfo(hostname, None)
@@ -70,7 +72,6 @@ def _is_private_ip(hostname: str) -> bool:
 
 
 def _validate_url(raw: str) -> str:
-    """Normalize and validate a URL. Returns the clean URL or raises 400."""
     if not raw:
         raise HTTPException(status_code=400, detail="URL is required")
     url = raw.strip()
@@ -96,23 +97,28 @@ def _domain(url: str) -> str:
 
 
 async def _get_scan_url(request: Request) -> str:
-    """Dependency to extract and validate URL from form data."""
     data = await request.form()
     return _validate_url(data.get("url", ""))
 
-
-# ── Root / Health ─────────────────────────────────────────────────────────────
 
 @app.get("/")
 async def root():
     return {
         "name": "Matrix Scanner API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "tools": {
             "nmap":      check_tool("nmap"),
             "dnsrecon":  check_tool("dnsrecon"),
             "wafw00f":   check_tool("wafw00f"),
             "subfinder": check_tool("subfinder"),
+            "whatweb":   check_tool("whatweb"),
+            "gobuster":  check_tool("gobuster"),
+            "gospider":  check_tool("gospider"),
+            "openssl":   check_tool("openssl"),
+            "curl":      check_tool("curl"),
+            "ping":      check_tool("ping"),
+            "dig":       check_tool("dig"),
+            "nslookup":  check_tool("nslookup"),
         }
     }
 
@@ -121,8 +127,6 @@ async def root():
 async def health():
     return {"status": "ok", "timestamp": int(time.time())}
 
-
-# ── Scan endpoints ────────────────────────────────────────────────────────────
 
 @app.post("/scan/dns")
 @limiter.limit("30/minute")
@@ -192,7 +196,86 @@ async def scan_subdomains(request: Request, url: str = Depends(_get_scan_url)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Global error handler ──────────────────────────────────────────────────────
+@app.post("/scan/live")
+@limiter.limit("30/minute")
+async def scan_live_endpoint(request: Request, url: str = Depends(_get_scan_url)):
+    domain = _domain(url)
+    try:
+        result = await asyncio.to_thread(scan_live, domain)
+        return {"success": True, "domain": domain, "live": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Live scan error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/scan/ssl")
+@limiter.limit("30/minute")
+async def scan_ssl_endpoint(request: Request, url: str = Depends(_get_scan_url)):
+    domain = _domain(url)
+    try:
+        result = await asyncio.to_thread(scan_ssl, domain)
+        return {"success": True, "domain": domain, "ssl": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("SSL scan error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/scan/headers")
+@limiter.limit("30/minute")
+async def scan_headers_endpoint(request: Request, url: str = Depends(_get_scan_url)):
+    try:
+        result = await asyncio.to_thread(scan_headers, url)
+        return {"success": True, "url": url, "headers": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Headers scan error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/scan/crawl")
+@limiter.limit("15/minute")
+async def scan_crawl_endpoint(request: Request, url: str = Depends(_get_scan_url)):
+    try:
+        result = await asyncio.to_thread(scan_crawl, url)
+        return {"success": True, "url": url, "crawl": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Crawl scan error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/scan/directories")
+@limiter.limit("15/minute")
+async def scan_directories_endpoint(request: Request, url: str = Depends(_get_scan_url)):
+    try:
+        result = await asyncio.to_thread(scan_directories, url)
+        return {"success": True, "url": url, "directories": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Directory scan error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/scan/dns-extended")
+@limiter.limit("20/minute")
+async def scan_dns_extended_endpoint(request: Request, url: str = Depends(_get_scan_url)):
+    domain = _domain(url)
+    try:
+        result = await asyncio.to_thread(scan_dns_extended, domain)
+        return {"success": True, "domain": domain, "dns_extended": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("DNS extended scan error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.exception_handler(Exception)
 async def global_error_handler(request: Request, exc: Exception):

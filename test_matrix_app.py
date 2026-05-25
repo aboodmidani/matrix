@@ -8,7 +8,6 @@ import requests
 import time
 import sys
 
-# Configuration
 API_BASE_URL = "http://localhost:8000"
 TEST_URL = "https://example.com"
 TIMEOUT = 30
@@ -23,7 +22,6 @@ class MatrixAppTester:
         })
 
     def test_api_health(self) -> bool:
-        """Test API health endpoint."""
         print("Testing API Health...")
         try:
             response = self.session.get(f"{self.base_url}/health", timeout=TIMEOUT)
@@ -39,7 +37,6 @@ class MatrixAppTester:
             return False
 
     def test_api_info(self) -> bool:
-        """Test API info endpoint."""
         print("Testing API Info...")
         try:
             response = self.session.get(f"{self.base_url}/", timeout=TIMEOUT)
@@ -56,7 +53,6 @@ class MatrixAppTester:
             return False
 
     def test_input_validation(self) -> bool:
-        """Test input validation and sanitization."""
         print("Testing Input Validation...")
         test_cases = [
             {"url": "<script>alert('xss')</script>", "expected_valid": False},
@@ -98,7 +94,6 @@ class MatrixAppTester:
         return success
 
     def test_private_ip_blocked(self) -> bool:
-        """Test that private IPs are blocked."""
         print("Testing Private IP Blocking...")
         private_urls = [
             "http://127.0.0.1",
@@ -125,7 +120,6 @@ class MatrixAppTester:
         return passed == len(private_urls)
 
     def test_scan_endpoints(self) -> dict:
-        """Test individual scan endpoints."""
         print("Testing Scan Endpoints...")
         endpoints = [
             ("DNS Scan", "/scan/dns"),
@@ -133,6 +127,12 @@ class MatrixAppTester:
             ("Firewall Scan", "/scan/firewall"),
             ("Technology Scan", "/scan/technologies"),
             ("Subdomain Scan", "/scan/subdomains"),
+            ("Live Status", "/scan/live"),
+            ("SSL Scan", "/scan/ssl"),
+            ("Headers Scan", "/scan/headers"),
+            ("Crawl Scan", "/scan/crawl"),
+            ("Directory Scan", "/scan/directories"),
+            ("DNS Extended", "/scan/dns-extended"),
         ]
 
         results = {}
@@ -166,7 +166,6 @@ class MatrixAppTester:
         return results
 
     def run_all_tests(self) -> dict:
-        """Run all tests and return results."""
         print("=" * 60)
         print("MATRIX SCANNER - INTEGRATION TEST SUITE")
         print("=" * 60)

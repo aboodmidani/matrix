@@ -11,22 +11,25 @@ TOOLS = {
     'dnsrecon':  'DNS reconnaissance tool',
     'wafw00f':   'WAF detection tool',
     'subfinder': 'Subdomain discovery tool',
+    'whatweb':   'Web technology fingerprinter',
+    'gobuster':  'Directory/file brute-forcer',
+    'gospider':  'Web crawler / spider',
+    'openssl':   'SSL/TLS toolkit',
+    'curl':      'HTTP request tool',
+    'ping':      'Network reachability tester',
+    'nslookup':  'DNS lookup utility',
+    'dig':       'DNS lookup utility',
 }
 
 
 def check_tool(name: str) -> bool:
-    """Return True if the tool binary is available in PATH."""
     found = shutil.which(name) is not None
     if not found:
-        logger.warning(f"Tool '{name}' not found in PATH")
+        logger.warning("Tool '%s' not found in PATH", name)
     return found
 
 
-def run_command(command: List[str], timeout: Optional[int] = None) -> Tuple[bool, str, str]:
-    """
-    Run a CLI command.
-    Returns (success, stdout, stderr).
-    """
+def run_command(command: List[str], timeout: Optional[int] = None, input_text: Optional[str] = None) -> Tuple[bool, str, str]:
     timeout = timeout or settings.SCAN_TIMEOUT
     try:
         logger.info(f"Running: {' '.join(command)}")
@@ -34,7 +37,8 @@ def run_command(command: List[str], timeout: Optional[int] = None) -> Tuple[bool
             command,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            input=input_text,
         )
         return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired:

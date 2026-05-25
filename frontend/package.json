@@ -1,7 +1,7 @@
 {
   "name": "matrix-scanner",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,8 +10,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "vue": "^3.4.0",
-    "vue-router": "^4.6.4"
+    "vue": "^3.4.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
