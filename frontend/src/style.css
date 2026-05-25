@@ -49,8 +49,6 @@ body {
 .glow-red    { text-shadow: var(--glow-red); }
 .glow-border { box-shadow: var(--glow-green); }
 
-/* ── Matrix Card ───────────────────────────────────────── */
-
 .matrix-card {
   background: var(--matrix-surface);
   border: 1px solid var(--matrix-border);
@@ -58,13 +56,9 @@ body {
   -webkit-backdrop-filter: blur(12px);
   position: relative;
   overflow: hidden;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(0, 255, 65, 0.05);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(0, 255, 65, 0.05);
 }
+
 .matrix-card::before {
   content: '';
   position: absolute;
@@ -72,126 +66,6 @@ body {
   background: linear-gradient(135deg, rgba(0,255,65,0.03) 0%, transparent 60%);
   pointer-events: none;
 }
-.matrix-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0,255,65,0.02) 50%, transparent 60%);
-  background-size: 100% 200%;
-  background-position: 0 100%;
-  pointer-events: none;
-  transition: background-position 0.6s ease;
-}
-.matrix-card:hover {
-  transform: perspective(900px) rotateX(0.8deg) translateY(-3px);
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.4),
-    0 12px 48px rgba(0, 0, 0, 0.5),
-    0 0 24px rgba(0, 255, 65, 0.06),
-    inset 0 1px 0 rgba(0, 255, 65, 0.08);
-}
-.matrix-card:hover::after {
-  background-position: 0 0;
-}
-
-/* ── Holographic Entrance ───────────────────────────────── */
-
-.hologram-out {
-  transform: perspective(1000px) rotateX(1.5deg) translateY(6px);
-  filter: brightness(1.06);
-  transition: none;
-}
-
-.hologram-in {
-  animation: hologramReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  position: relative;
-}
-.hologram-in::before {
-  content: '';
-  position: absolute;
-  left: -100%;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0,255,65,0.7), rgba(0,255,220,0.8), rgba(0,255,65,0.7), transparent);
-  filter: blur(1px);
-  opacity: 0;
-  pointer-events: none;
-  animation: holoScanLine 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes hologramReveal {
-  0% {
-    transform: perspective(1000px) rotateX(4deg) translateY(18px);
-    filter: brightness(1.35) blur(1px);
-  }
-  50% {
-    transform: perspective(1000px) rotateX(1.5deg) translateY(4px);
-    filter: brightness(1.08) blur(0);
-  }
-  100% {
-    transform: perspective(1000px) rotateX(0deg) translateY(0);
-    filter: brightness(1) blur(0);
-  }
-}
-
-@keyframes holoScanLine {
-  0% {
-    left: -100%;
-    top: -2px;
-    opacity: 1;
-  }
-  35% {
-    left: 100%;
-    top: -2px;
-    opacity: 1;
-  }
-  36% {
-    left: -100%;
-    top: 50%;
-    opacity: 0.7;
-  }
-  70% {
-    left: 100%;
-    top: 50%;
-    opacity: 0.7;
-  }
-  71% {
-    left: -100%;
-    top: 100%;
-    opacity: 0.3;
-  }
-  100% {
-    left: 100%;
-    top: 100%;
-    opacity: 0;
-  }
-}
-
-.hologram-stagger-1  { animation-delay: 0s !important; }
-.hologram-stagger-2  { animation-delay: 0.08s !important; }
-.hologram-stagger-3  { animation-delay: 0.16s !important; }
-.hologram-stagger-4  { animation-delay: 0.24s !important; }
-.hologram-stagger-5  { animation-delay: 0.32s !important; }
-.hologram-stagger-6  { animation-delay: 0.40s !important; }
-.hologram-stagger-7  { animation-delay: 0.48s !important; }
-.hologram-stagger-8  { animation-delay: 0.56s !important; }
-.hologram-stagger-9  { animation-delay: 0.64s !important; }
-.hologram-stagger-10 { animation-delay: 0.72s !important; }
-.hologram-stagger-11 { animation-delay: 0.80s !important; }
-
-.hologram-stagger > .hologram-out:nth-child(1)  { transition-delay: 0s; }
-.hologram-stagger > .hologram-out:nth-child(2)  { transition-delay: 0.08s; }
-.hologram-stagger > .hologram-out:nth-child(3)  { transition-delay: 0.16s; }
-.hologram-stagger > .hologram-out:nth-child(4)  { transition-delay: 0.24s; }
-.hologram-stagger > .hologram-out:nth-child(5)  { transition-delay: 0.32s; }
-.hologram-stagger > .hologram-out:nth-child(6)  { transition-delay: 0.4s; }
-.hologram-stagger > .hologram-out:nth-child(7)  { transition-delay: 0.48s; }
-.hologram-stagger > .hologram-out:nth-child(8)  { transition-delay: 0.56s; }
-.hologram-stagger > .hologram-out:nth-child(9)  { transition-delay: 0.64s; }
-.hologram-stagger > .hologram-out:nth-child(10) { transition-delay: 0.72s; }
-.hologram-stagger > .hologram-out:nth-child(11) { transition-delay: 0.8s; }
-
-/* ── Bracket Corners ───────────────────────────────────── */
 
 .bracket-corners {
   position: relative;
@@ -215,8 +89,6 @@ body {
   border-width: 0 2px 2px 0;
 }
 
-/* ── Badges ────────────────────────────────────────────── */
-
 .badge-scanning {
   display: inline-flex;
   align-items: center;
@@ -231,8 +103,6 @@ body {
 .badge-warn  { color: #ffd700; font-size: 0.65rem; letter-spacing: 0.05em; }
 .badge-fail  { color: #ff003c; font-size: 0.65rem; letter-spacing: 0.05em; }
 
-/* ── Cursor Blink ──────────────────────────────────────── */
-
 .cursor-blink::after {
   content: '\2588';
   animation: blink 1s step-end infinite;
@@ -244,20 +114,18 @@ body {
   50%       { opacity: 0; }
 }
 
-/* ── Typing ────────────────────────────────────────────── */
-
 .typing-text {
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;
   border-right: 2px solid var(--matrix-green);
-  width: 0;
+  clip-path: inset(0 100% 0 0);
+  visibility: visible !important;
 }
 .typing-text.typing-done {
   border-right-color: transparent;
+  clip-path: inset(0 0% 0 0);
 }
-
-/* ── Scanline ──────────────────────────────────────────── */
 
 .scanline {
   position: relative;
@@ -283,13 +151,51 @@ body {
   to   { width: 100%; }
 }
 
-/* ── Fade In Up ────────────────────────────────────────── */
-
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .fade-in-up { animation: fadeInUp 0.4s ease forwards; }
+
+@keyframes glowIn {
+  0%   { opacity: 0; filter: brightness(3); letter-spacing: 0.5em; }
+  60%  { opacity: 1; filter: brightness(1.5); letter-spacing: 0.12em; }
+  100% { opacity: 1; filter: brightness(1); letter-spacing: 0.12em; }
+}
+.entrance-hero {
+  animation: glowIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.entrance-subtitle {
+  animation: fadeSlideUp 0.5s ease 0.6s both;
+}
+.entrance-tagline {
+  animation: fadeSlideUp 0.5s ease 0.8s both;
+}
+.entrance-metrics {
+  animation: fadeSlideUp 0.5s ease 1.0s both;
+}
+.entrance-divider {
+  animation: fadeSlideUp 0.5s ease 1.2s both;
+}
+.entrance-disclaimer {
+  animation: fadeSlideUp 0.5s ease 1.4s both;
+}
+.entrance-input-card {
+  animation: fadeSlideUp 0.5s ease 1.6s both;
+}
+.entrance-quick-item {
+  opacity: 0;
+  animation: fadeSlideUp 0.3s ease forwards;
+}
+.entrance-quick-item:nth-child(1) { animation-delay: 2.0s; }
+.entrance-quick-item:nth-child(2) { animation-delay: 2.1s; }
+.entrance-quick-item:nth-child(3) { animation-delay: 2.2s; }
+.entrance-quick-item:nth-child(4) { animation-delay: 2.3s; }
 
 .fade-in-up-stagger > * {
   opacity: 0;
@@ -307,15 +213,11 @@ body {
 .fade-in-up-stagger > *:nth-child(10) { animation-delay: 0.72s; }
 .fade-in-up-stagger > *:nth-child(11) { animation-delay: 0.80s; }
 
-/* ── Pulse Glow ────────────────────────────────────────── */
-
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 4px rgba(0,255,65,0.3); }
   50%       { box-shadow: 0 0 16px rgba(0,255,65,0.7), 0 0 32px rgba(0,255,65,0.3); }
 }
 .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
-
-/* ── Progress Shimmer ──────────────────────────────────── */
 
 @keyframes shimmer {
   0%   { background-position: -200% center; }
@@ -333,33 +235,77 @@ body {
   animation: shimmer 2s linear infinite;
 }
 
-/* ── Skeleton ──────────────────────────────────────────── */
+/* Segmented progress bar */
+.progress-segment {
+  height: 100%;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+  min-width: 4px;
+}
+.progress-segment.done {
+  background: #00ff41;
+  box-shadow: 0 0 4px rgba(0,255,65,0.5);
+}
+.progress-segment.error {
+  background: #ff003c;
+  box-shadow: 0 0 4px rgba(255,0,60,0.5);
+}
+.progress-segment.scanning {
+  background: #ffd700;
+  box-shadow: 0 0 6px rgba(255,215,0,0.6);
+  animation: pulse-gold 0.8s ease-in-out infinite alternate;
+}
+.progress-segment.idle {
+  background: rgba(0,255,65,0.08);
+}
+@keyframes pulse-gold {
+  from { opacity: 0.4; }
+  to   { opacity: 1; }
+}
+
+/* Scan complete banner */
+@keyframes bannerReveal {
+  0%   { opacity: 0; transform: scaleY(0); max-height: 0; }
+  100% { opacity: 1; transform: scaleY(1); max-height: 200px; }
+}
+.scan-banner {
+  transform-origin: top center;
+  animation: bannerReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+/* Glitch card reveal */
+@keyframes glitchReveal {
+  0%   { opacity: 0.3; filter: brightness(3) hue-rotate(90deg); transform: translateX(-4px); }
+  20%  { opacity: 1; filter: brightness(2); transform: translateX(4px); }
+  40%  { filter: brightness(1.5) hue-rotate(-30deg); transform: translateX(-2px); }
+  60%  { filter: brightness(1.2); transform: translateX(1px); }
+  100% { filter: brightness(1); transform: translateX(0); }
+}
+.glitch-reveal {
+  animation: glitchReveal 0.4s ease-out forwards;
+}
+
+/* Animated counter */
+@keyframes counterPop {
+  0%   { opacity: 0; transform: scale(0.5); }
+  60%  { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.counter-pop {
+  animation: counterPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  display: inline-block;
+}
 
 @keyframes skeleton-shimmer {
   0% { background-position: -200px 0; }
   100% { background-position: calc(200px + 100%) 0; }
 }
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(0,255,65,0.03) 25%,
-    rgba(0,255,65,0.08) 37%,
-    rgba(0,255,220,0.12) 45%,
-    rgba(0,255,65,0.08) 53%,
-    rgba(0,255,65,0.03) 65%
-  );
+  background: linear-gradient(90deg, rgba(0,255,65,0.04) 25%, rgba(0,255,65,0.1) 50%, rgba(0,255,65,0.04) 75%);
   background-size: 200px 100%;
-  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
   border-radius: 2px;
 }
-@keyframes hologram-shimmer {
-  0%   { transform: translateX(-100%) scaleY(0); opacity: 0; }
-  20%  { transform: translateX(-100%) scaleY(1); opacity: 1; }
-  80%  { transform: translateX(200%)  scaleY(1); opacity: 1; }
-  100% { transform: translateX(200%)  scaleY(0); opacity: 0; }
-}
-
-/* ── Count Up ──────────────────────────────────────────── */
 
 @keyframes count-up {
   from { opacity: 0; transform: translateY(4px); }
@@ -369,15 +315,11 @@ body {
   animation: count-up 0.6s ease forwards;
 }
 
-/* ── Input ─────────────────────────────────────────────── */
-
 .matrix-input:focus {
   outline: none;
   border-color: var(--matrix-green);
   box-shadow: 0 0 0 1px rgba(0,255,65,0.3), 0 0 12px rgba(0,255,65,0.15);
 }
-
-/* ── Button ────────────────────────────────────────────── */
 
 .btn-matrix {
   position: relative;
@@ -397,27 +339,12 @@ body {
 .btn-matrix:hover {
   box-shadow: var(--glow-green);
 }
-.btn-matrix:active { transform: scale(0.97); }
+.btn-matrix:active { transform: scale(0.98); }
 .btn-matrix:focus-visible {
   outline: 2px solid var(--matrix-green);
   outline-offset: 2px;
   box-shadow: var(--glow-green);
 }
-
-/* Ripple effect */
-.btn-ripple {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(0, 255, 65, 0.25);
-  transform: scale(0);
-  animation: ripple 0.5s ease-out forwards;
-  pointer-events: none;
-}
-@keyframes ripple {
-  to { transform: scale(4); opacity: 0; }
-}
-
-/* ── Table ─────────────────────────────────────────────── */
 
 .matrix-table th {
   color: rgba(0,255,65,0.5);
@@ -434,8 +361,6 @@ body {
 }
 .matrix-table tr:hover td { background: rgba(0,255,65,0.04); }
 
-/* ── Chip ──────────────────────────────────────────────── */
-
 .chip {
   display: inline-flex;
   align-items: center;
@@ -447,9 +372,7 @@ body {
   border: 1px solid;
   transition: all 0.2s;
 }
-.chip:hover { filter: brightness(1.3); }
-
-/* ── Focus Visible ─────────────────────────────────────── */
+.chip:hover { filter: brightness(1.2); }
 
 [role="button"]:focus-visible,
 button:focus-visible,
@@ -458,24 +381,16 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-/* ── Perspecive Utilities ──────────────────────────────── */
-
-.perspective-1000 { perspective: 1000px; }
-.perspective-800  { perspective: 800px; }
-.preserve-3d      { transform-style: preserve-3d; }
-.backface-hidden  { backface-visibility: hidden; }
-
-/* ── Responsive ────────────────────────────────────────── */
-
-@media (max-width: 768px) {
-  .matrix-card:hover {
-    transform: none !important;
-  }
-}
-
 @media (max-width: 640px) {
   input[type="text"], input[type="url"] { font-size: 16px; }
   .typing-text { white-space: normal; border-right: none; }
+  .entrance-hero { animation: glowIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+  .entrance-subtitle { animation: fadeSlideUp 0.5s ease 0.3s both; }
+  .entrance-tagline { animation: fadeSlideUp 0.5s ease 0.5s both; }
+  .entrance-metrics { animation: fadeSlideUp 0.5s ease 0.7s both; }
+  .entrance-divider { animation: fadeSlideUp 0.5s ease 0.9s both; }
+  .entrance-disclaimer { animation: fadeSlideUp 0.5s ease 1.1s both; }
+  .entrance-input-card { animation: fadeSlideUp 0.5s ease 1.3s both; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -484,17 +399,15 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
   }
   .skeleton { animation: none; background: rgba(0,255,65,0.06); }
-  .typing-text { width: auto !important; }
-  .hologram-out {
-    transform: none;
-    filter: none;
-  }
-  .hologram-in {
-    animation: fadeInUp 0.3s ease forwards !important;
-  }
-  .hologram-in::before {
-    display: none !important;
-  }
+  .typing-text { clip-path: none !important; border-right: none !important; }
+  .entrance-hero,
+  .entrance-subtitle,
+  .entrance-tagline,
+  .entrance-metrics,
+  .entrance-divider,
+  .entrance-disclaimer,
+  .entrance-input-card,
+  .entrance-quick-item { animation: none !important; opacity: 1 !important; }
 }
 
 @media print {

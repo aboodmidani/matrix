@@ -5,6 +5,7 @@
 </template>
 
 <script setup>
+import { watch } from 'vue'
 import { useHead } from '@unhead/vue'
 import Home from './views/Home.vue'
 import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, OG_IMAGE } from './utils/keywords.js'

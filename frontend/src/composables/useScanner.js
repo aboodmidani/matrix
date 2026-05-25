@@ -11,6 +11,8 @@ export const scanState = reactive({
   done:        false,
   completed:   0,
   total:       0,
+  startTime:   null,
+  elapsed:     '',
 })
 
 export const scans = reactive({
@@ -126,6 +128,8 @@ export async function runAllScans(url) {
   scanState.completed   = 0
   scanState.total       = Object.keys(SCAN_CONFIGS).length
   scanState.currentScan = 'Initializing…'
+  scanState.startTime   = Date.now()
+  scanState.elapsed     = ''
 
   for (const key of Object.keys(scans)) {
     scans[key].status = 'idle'
