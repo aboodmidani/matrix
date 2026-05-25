@@ -75,6 +75,31 @@ def _curl_based_scan(url: str) -> Dict[str, Any]:
         result['error'] = 'curl not installed'
         return result
     base = url.rstrip('/')
+    base_success, base_stdout, _ = run_command(
+        ['curl', '-s', '-o', 'nul', '-w', '%{size_download}', base],
+        timeout=10
+    )
+    base_size = int(base_stdout.strip()) if base_success and base_stdout.strip().isdigit() else None
+    for path in WORDLIST:
+        target = f'{base}/{path}'
+        success, stdout, _ = run_command(
+            ['curl', '-s', '-o', 'nul', '-w', '%{http_code}:%{size_download}', target],
+            timeout=5
+        )
+        if success and ':' in stdout:
+            code, size_str = stdout.strip().split(':', 1)
+            if code not in ['404', '301', '302']:
+                try:
+                    size = int(size_str) if size_str.isdigit() else 0
+                    if base_size is None or abs(size - base_size) > 200:
+                        result['found'].append({
+                            'path': f'/{path}',
+                            'status': int(code),
+                        })
+                except ValueError:
+                    pass
+    return result
+    base = url.rstrip('/')
     for path in WORDLIST:
         target = f'{base}/{path}'
         success, stdout, stderr = run_command(

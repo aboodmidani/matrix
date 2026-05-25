@@ -29,12 +29,13 @@ def scan_ssl(domain: str) -> Dict[str, Any]:
             '-connect', f'{domain}:443',
             '-showcerts',
         ],
+        input_text='Q\n',
         timeout=15
     )
     if not success and stderr:
-        # Try without -servername as fallback
         success, stdout, stderr = run_command(
             ['openssl', 's_client', '-connect', f'{domain}:443', '-showcerts'],
+            input_text='Q\n',
             timeout=15
         )
 
@@ -78,10 +79,9 @@ def scan_ssl(domain: str) -> Dict[str, Any]:
         timeout=10
     )
     if success and stdout3:
-        san_m = re.search(r'X509v3 Subject Alternative Name:\s*\n\s*(.+?)(?:\n\s*$|\n\S)', stdout3, re.DOTALL)
-        if san_m:
-            san_text = san_m.group(1)
-            result['certificate']['san'] = [s.strip() for s in san_text.split(',')]
+        san_entries = re.findall(r'DNS:([^\s,]+)', stdout3)
+        if san_entries:
+            result['certificate']['san'] = [f'DNS:{e}' for e in san_entries]
 
     from datetime import datetime, timezone
     na = result['certificate']['not_after']

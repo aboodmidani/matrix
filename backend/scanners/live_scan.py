@@ -20,9 +20,10 @@ def scan_live(domain: str) -> Dict[str, Any]:
         if success:
             result['alive'] = True
             import re
-            m = re.search(r'time[=<]\s*(\d+(?:\.\d+)?)\s*ms', stdout, re.IGNORECASE)
+            m = re.search(r'(?:time[=<]\s*(\d+(?:\.\d+)?)\s*ms|time=(\d+)ms)', stdout, re.IGNORECASE)
             if m:
-                result['ping_time_ms'] = float(m.group(1))
+                val = m.group(1) or m.group(2)
+                result['ping_time_ms'] = float(val)
     if check_tool('curl'):
         success, stdout, _ = run_command(
             ['curl', '-s', '-o', 'nul', '-w', '%{http_code}', f'https://{domain}'],

@@ -7,9 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 def run_dnsrecon(domain: str) -> Dict[str, Any]:
-    if not check_tool('dnsrecon'):
-        raise RuntimeError("Required tool 'dnsrecon' is not installed")
-    return _dnsrecon_scan(domain)
+    if check_tool('dnsrecon'):
+        return _dnsrecon_scan(domain)
+    return _nslookup_fallback(domain)
 
 
 def _dnsrecon_scan(domain: str) -> Dict[str, Any]:
@@ -91,7 +91,9 @@ def _parse_text_output(text: str, domain: str) -> Dict[str, Any]:
         'SOA': [], 'SRV': [], 'CNAME': [],
     }
     for line in text.splitlines():
-        line = line.strip()
+        line = re.sub(r'^\[\*\]\s*', '', line).strip()
+        if not line:
+            continue
         if re.match(r'^A\s+', line):
             m = re.search(r'(\d{1,3}(?:\.\d{1,3}){3})', line)
             if m and not m.group(1).startswith('127.'):
@@ -141,3 +143,63 @@ def _parse_text_output(text: str, domain: str) -> Dict[str, Any]:
                 if host not in records['CNAME']:
                     records['CNAME'].append(host)
     return {'records': records}
+
+
+def _nslookup_fallback(domain: str) -> Dict[str, Any]:
+    import re
+    records = {k: [] for k in ['A', 'AAAA', 'MX', 'NS', 'TXT', 'SOA', 'SRV', 'CNAME']}
+    queries = [
+        ('A', ['nslookup', '-type=A', domain]),
+        ('AAAA', ['nslookup', '-type=AAAA', domain]),
+        ('MX', ['nslookup', '-type=MX', domain]),
+        ('NS', ['nslookup', '-type=NS', domain]),
+        ('TXT', ['nslookup', '-type=TXT', domain]),
+        ('SOA', ['nslookup', '-type=SOA', domain]),
+        ('CNAME', ['nslookup', '-type=CNAME', domain]),
+    ]
+    for rtype, cmd in queries:
+        success, stdout, _ = run_command(cmd, timeout=10)
+        if not success or not stdout:
+            continue
+        if rtype == 'A':
+            for m in re.finditer(r'Name:\s+\S+\s+Address[es]?:\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', stdout):
+                ip = m.group(1)
+                if not ip.startswith('127.') and ip not in records['A']:
+                    records['A'].append(ip)
+        elif rtype == 'AAAA':
+            for m in re.finditer(r'Name:\s+\S+\s+Address[es]?:\s+([0-9a-fA-F:]+)', stdout):
+                addr = m.group(1)
+                if addr not in records['AAAA']:
+                    records['AAAA'].append(addr)
+        elif rtype == 'MX':
+            for line in stdout.splitlines():
+                m = re.search(r'MX preference\s*=\s*(\d+),\s*mail exchanger\s*=\s*(\S+)', line, re.IGNORECASE)
+                if m:
+                    entry = f"{m.group(1)} {m.group(2).rstrip('.')}"
+                    if entry not in records['MX']:
+                        records['MX'].append(entry)
+        elif rtype == 'NS':
+            for m in re.finditer(r'nameserver\s*=\s*(\S+)', stdout, re.IGNORECASE):
+                host = m.group(1).rstrip('.')
+                if host not in records['NS'] and host != domain:
+                    records['NS'].append(host)
+        elif rtype == 'TXT':
+            for m in re.finditer(r'"([^"]+)"', stdout):
+                txt = m.group(1)
+                if txt not in records['TXT']:
+                    records['TXT'].append(txt)
+        elif rtype == 'SOA':
+            for line in stdout.splitlines():
+                m = re.search(r'primary name server\s*=\s*(\S+)', line, re.IGNORECASE)
+                if m:
+                    host = m.group(1).rstrip('.')
+                    if host not in records['SOA']:
+                        records['SOA'].append(host)
+        elif rtype == 'CNAME':
+            for line in stdout.splitlines():
+                m = re.search(r'(\S+)\s+canonical name\s*=\s*(\S+)', line, re.IGNORECASE)
+                if m:
+                    host = m.group(2).rstrip('.')
+                    if host not in records['CNAME']:
+                        records['CNAME'].append(host)
+    return {'records': records, 'fallback': 'nslookup'}

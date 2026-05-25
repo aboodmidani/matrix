@@ -15,9 +15,9 @@ PORTS = [
 
 
 def run_nmap_scan(domain: str) -> List[Dict[str, Any]]:
-    if not check_tool('nmap'):
-        raise RuntimeError("Required tool 'nmap' is not installed")
-    return _nmap_scan(domain)
+    if check_tool('nmap'):
+        return _nmap_scan(domain)
+    return _powershell_port_scan(domain)
 
 
 def _nmap_scan(domain: str) -> List[Dict[str, Any]]:
@@ -68,4 +68,37 @@ def _parse_nmap_output(output: str) -> List[Dict[str, Any]]:
             first = info[0]
             if first and first not in p['version']:
                 p['version'] = f"{p['version']} | {first}".strip(' |')
+    return ports
+
+
+def _powershell_port_scan(domain: str) -> List[Dict[str, Any]]:
+    port_list = ','.join(str(p) for p in PORTS)
+    ps_script = (
+        f'@({",".join(str(p) for p in PORTS)}) | ForEach-Object {{ '
+        f'try {{ '
+        f'$c = New-Object Net.Sockets.TcpClient; '
+        f'$async = $c.ConnectAsync("{domain}", $_); '
+        f'if ($async.Wait(1500)) {{ Write-Output $_ }} '
+        f'}} catch {{ }} '
+        f'finally {{ try {{ $c.Dispose() }} catch {{ }} }} '
+        f'}}'
+    )
+    success, stdout, stderr = run_command(
+        ['powershell', '-NoProfile', '-Command', ps_script],
+        timeout=120
+    )
+    ports = []
+    if success and stdout.strip():
+        for line in stdout.splitlines():
+            line = line.strip()
+            if line.isdigit():
+                ports.append({
+                    'port': int(line),
+                    'protocol': 'tcp',
+                    'state': 'open',
+                    'service': '',
+                    'version': '',
+                })
+    if not ports:
+        logger.info("PowerShell port scan returned no open ports for %s", domain)
     return ports
