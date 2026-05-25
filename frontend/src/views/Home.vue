@@ -63,9 +63,7 @@
         </section>
 
         <!-- Disclaimer -->
-        <div class="entrance-disclaimer">
-          <DisclaimerCard v-if="!accepted" @accepted="accept" />
-        </div>
+        <DisclaimerCard v-if="!accepted" @accepted="accept" />
 
         <!-- Scanner section -->
         <Transition name="fade">
