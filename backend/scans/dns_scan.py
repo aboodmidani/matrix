@@ -1,4 +1,6 @@
+import os
 import json
+import tempfile
 import logging
 from typing import Dict, Any, List
 from tools import check_tool, run_command
@@ -13,17 +15,28 @@ def run_dnsrecon(domain: str) -> Dict[str, Any]:
 
 
 def _dnsrecon_scan(domain: str) -> Dict[str, Any]:
-    success, stdout, stderr = run_command(
-        ['dnsrecon', '-d', domain, '-t', 'std', '--json', '/dev/stdout'],
-        timeout=60
-    )
-    if success and stdout.strip():
-        try:
-            result = _parse_json_output(stdout, domain)
-            if result and any(result['records'].values()):
-                return result
-        except (json.JSONDecodeError, KeyError):
-            logger.debug("dnsrecon JSON parsing failed, trying text output")
+    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+    tmp.close()
+    try:
+        success, _, _ = run_command(
+            ['dnsrecon', '-d', domain, '-t', 'std', '--json', tmp.name],
+            timeout=60
+        )
+        if success and os.path.getsize(tmp.name) > 0:
+            with open(tmp.name, 'r') as f:
+                content = f.read()
+            try:
+                result = _parse_json_output(content, domain)
+                if result and any(result['records'].values()):
+                    return result
+            except (json.JSONDecodeError, KeyError):
+                logger.debug("dnsrecon JSON parsing failed, trying text output")
+    finally:
+        if os.path.exists(tmp.name):
+            try:
+                os.unlink(tmp.name)
+            except OSError:
+                pass
 
     success, stdout, stderr = run_command(
         ['dnsrecon', '-d', domain, '-t', 'std'],

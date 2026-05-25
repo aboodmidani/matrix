@@ -1,10 +1,13 @@
 import os
+import sys
 import tempfile
 import logging
 from typing import Dict, Any
 from tools import check_tool, run_command
 
 logger = logging.getLogger(__name__)
+
+NULL_DEVICE = 'nul' if sys.platform == 'win32' else '/dev/null'
 
 WORDLIST = [
     'admin', 'login', 'wp-admin', 'administrator', 'backup',
@@ -76,14 +79,14 @@ def _curl_based_scan(url: str) -> Dict[str, Any]:
         return result
     base = url.rstrip('/')
     base_success, base_stdout, _ = run_command(
-        ['curl', '-s', '-o', 'nul', '-w', '%{size_download}', base],
+        ['curl', '-s', '-o', NULL_DEVICE, '-w', '%{size_download}', base],
         timeout=10
     )
     base_size = int(base_stdout.strip()) if base_success and base_stdout.strip().isdigit() else None
     for path in WORDLIST:
         target = f'{base}/{path}'
         success, stdout, _ = run_command(
-            ['curl', '-s', '-o', 'nul', '-w', '%{http_code}:%{size_download}', target],
+            ['curl', '-s', '-o', NULL_DEVICE, '-w', '%{http_code}:%{size_download}', target],
             timeout=5
         )
         if success and ':' in stdout:
@@ -96,24 +99,6 @@ def _curl_based_scan(url: str) -> Dict[str, Any]:
                             'path': f'/{path}',
                             'status': int(code),
                         })
-                except ValueError:
-                    pass
-    return result
-    base = url.rstrip('/')
-    for path in WORDLIST:
-        target = f'{base}/{path}'
-        success, stdout, stderr = run_command(
-            ['curl', '-s', '-o', 'nul', '-w', '%{http_code}', target],
-            timeout=5
-        )
-        if success:
-            code = stdout.strip()
-            if code and code not in ['404', '301', '302']:
-                try:
-                    result['found'].append({
-                        'path': f'/{path}',
-                        'status': int(code),
-                    })
                 except ValueError:
                     pass
     return result

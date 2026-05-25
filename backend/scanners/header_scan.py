@@ -21,8 +21,6 @@ SECURITY_HEADERS = {
 
 
 def scan_headers(url: str) -> Dict[str, Any]:
-    if not check_tool('curl'):
-        raise RuntimeError("Required tool 'curl' is not installed")
     result = {
         'headers': {},
         'security_report': {},
@@ -31,19 +29,54 @@ def scan_headers(url: str) -> Dict[str, Any]:
         'security_headers_total': len(SECURITY_HEADERS),
         'missing_security_headers': [],
     }
+
+    if check_tool('curl'):
+        raw_headers = _curl_fetch_headers(url)
+        if raw_headers:
+            return _process_headers(raw_headers, result)
+        return result
+
+    raw_headers = _urllib_fetch_headers(url)
+    return _process_headers(raw_headers, result)
+
+
+def _curl_fetch_headers(url: str) -> str:
     success, stdout, stderr = run_command(
         ['curl', '-sI', '-L', url],
         timeout=15
     )
-    if not success:
-        return result
+    return stdout if success else ''
+
+
+def _urllib_fetch_headers(url: str) -> str:
+    import urllib.request
+    try:
+        req = urllib.request.Request(url, method='HEAD')
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            lines = [f'{k}: {v}' for k, v in resp.headers.items()]
+            return '\n'.join(lines)
+    except Exception as e:
+        logger.debug('urllib HEAD failed, trying GET: %s', e)
+        try:
+            req = urllib.request.Request(url, method='GET')
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                lines = [f'{k}: {v}' for k, v in resp.headers.items()]
+                return '\n'.join(lines)
+        except Exception as e2:
+            logger.warning('urllib header fetch failed: %s', e2)
+            return ''
+
+
+def _process_headers(raw: str, result: Dict[str, Any]) -> Dict[str, Any]:
     headers = {}
-    for line in stdout.splitlines():
+    for line in raw.splitlines():
         if ':' in line:
             key, _, value = line.partition(':')
             headers[key.strip().lower()] = value.strip()
+
     result['total_headers'] = len(headers)
     result['headers'] = {k: v for k, v in headers.items()}
+
     for hdr, description in SECURITY_HEADERS.items():
         hdr_lower = hdr.lower()
         if hdr_lower in headers:
@@ -60,4 +93,5 @@ def scan_headers(url: str) -> Dict[str, Any]:
                 'value': None,
                 'description': description,
             }
+
     return result

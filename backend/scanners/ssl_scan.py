@@ -1,5 +1,8 @@
 import re
+import ssl
+import socket
 import logging
+from datetime import datetime, timezone
 from typing import Dict, Any
 from tools import check_tool, run_command
 
@@ -7,8 +10,17 @@ logger = logging.getLogger(__name__)
 
 
 def scan_ssl(domain: str) -> Dict[str, Any]:
-    if not check_tool('openssl'):
-        raise RuntimeError("Required tool 'openssl' is not installed")
+    if check_tool('openssl'):
+        result = _openssl_scan(domain)
+        if result and result.get('certificate', {}).get('subject'):
+            return result
+        if result and result.get('error'):
+            logger.debug('openssl scan failed: %s — trying Python ssl fallback', result['error'])
+
+    return _ssl_fallback(domain)
+
+
+def _openssl_scan(domain: str) -> Dict[str, Any]:
     result = {
         'certificate': {
             'subject': None,
@@ -83,19 +95,81 @@ def scan_ssl(domain: str) -> Dict[str, Any]:
         if san_entries:
             result['certificate']['san'] = [f'DNS:{e}' for e in san_entries]
 
-    from datetime import datetime, timezone
-    na = result['certificate']['not_after']
-    if na:
-        for fmt in ['%b %d %H:%M:%S %Y %Z', '%b %d %H:%M:%S %Y %z', '%Y%m%d%H%M%SZ']:
-            try:
-                parsed = datetime.strptime(na.strip(), fmt)
-                parsed = parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
-                now = datetime.now(timezone.utc)
-                days = (parsed - now).days
-                result['certificate']['days_remaining'] = days
-                result['certificate']['expired'] = days < 0
-                break
-            except ValueError:
-                continue
+    _compute_expiry(result)
 
     return result
+
+
+def _ssl_fallback(domain: str) -> Dict[str, Any]:
+    result = {
+        'certificate': {
+            'subject': None,
+            'issuer': None,
+            'not_before': None,
+            'not_after': None,
+            'days_remaining': None,
+            'serial': None,
+            'san': [],
+            'expired': False,
+        },
+        'error': None,
+    }
+
+    try:
+        context = ssl.create_default_context()
+        with socket.create_connection((domain, 443), timeout=15) as sock:
+            with context.wrap_socket(sock, server_hostname=domain) as ssock:
+                cert = ssock.getpeercert()
+    except Exception as e:
+        result['error'] = str(e)
+        return result
+
+    if not cert:
+        result['error'] = 'No certificate returned'
+        return result
+
+    # Subject (common name)
+    subject = cert.get('subject', [])
+    for part in subject:
+        for key, val in part:
+            if key == 'commonName':
+                result['certificate']['subject'] = val
+
+    # Issuer
+    issuer = cert.get('issuer', [])
+    for part in issuer:
+        for key, val in part:
+            if key == 'commonName':
+                result['certificate']['issuer'] = val
+
+    # Serial
+    result['certificate']['serial'] = format(cert.get('serialNumber', 0))
+
+    # Dates
+    result['certificate']['not_before'] = cert.get('notBefore', '')
+    result['certificate']['not_after'] = cert.get('notAfter', '')
+
+    # SAN
+    san = cert.get('subjectAltName', [])
+    result['certificate']['san'] = [f'DNS:{name}' for key, name in san if key == 'DNS']
+
+    _compute_expiry(result)
+
+    return result
+
+
+def _compute_expiry(result: Dict[str, Any]) -> None:
+    na = result['certificate']['not_after']
+    if not na:
+        return
+    for fmt in ['%b %d %H:%M:%S %Y %Z', '%b %d %H:%M:%S %Y %z', '%Y%m%d%H%M%SZ']:
+        try:
+            parsed = datetime.strptime(na.strip(), fmt)
+            parsed = parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
+            now = datetime.now(timezone.utc)
+            days = (parsed - now).days
+            result['certificate']['days_remaining'] = days
+            result['certificate']['expired'] = days < 0
+            break
+        except ValueError:
+            continue
