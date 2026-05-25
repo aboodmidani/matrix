@@ -29,6 +29,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow: hidden;
 }
 
 body {
@@ -36,7 +37,9 @@ body {
   color: var(--matrix-green);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   -webkit-font-smoothing: antialiased;
+  overflow-y: auto;
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
 ::-webkit-scrollbar { width: 6px; }
@@ -97,15 +100,13 @@ body {
 /* ── Holographic Entrance ───────────────────────────────── */
 
 .hologram-out {
-  opacity: 0;
-  transform: perspective(1000px) rotateX(4deg) translateY(24px);
-  clip-path: polygon(0 50%, 100% 50%, 100% 50%, 0 50%);
-  filter: brightness(1.8) blur(3px);
+  transform: perspective(1000px) rotateX(1.5deg) translateY(6px);
+  filter: brightness(1.06);
   transition: none;
 }
 
 .hologram-in {
-  animation: hologramReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: hologramReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   position: relative;
 }
 .hologram-in::before {
@@ -118,27 +119,21 @@ body {
   filter: blur(1px);
   opacity: 0;
   pointer-events: none;
-  animation: holoScanLine 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: holoScanLine 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes hologramReveal {
   0% {
-    opacity: 0;
-    clip-path: polygon(0 50%, 100% 50%, 100% 50%, 0 50%);
-    filter: brightness(1.8) blur(3px);
-    transform: perspective(1000px) rotateX(5deg) translateY(30px);
+    transform: perspective(1000px) rotateX(4deg) translateY(18px);
+    filter: brightness(1.35) blur(1px);
   }
-  30% {
-    opacity: 1;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    filter: brightness(1.2) blur(0);
-    transform: perspective(1000px) rotateX(2deg) translateY(8px);
+  50% {
+    transform: perspective(1000px) rotateX(1.5deg) translateY(4px);
+    filter: brightness(1.08) blur(0);
   }
   100% {
-    opacity: 1;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    filter: brightness(1) blur(0);
     transform: perspective(1000px) rotateX(0deg) translateY(0);
+    filter: brightness(1) blur(0);
   }
 }
 
@@ -148,25 +143,25 @@ body {
     top: -2px;
     opacity: 1;
   }
-  40% {
+  35% {
     left: 100%;
     top: -2px;
     opacity: 1;
   }
-  41% {
+  36% {
     left: -100%;
     top: 50%;
-    opacity: 0.8;
+    opacity: 0.7;
   }
-  80% {
+  70% {
     left: 100%;
     top: 50%;
-    opacity: 0.8;
+    opacity: 0.7;
   }
-  81% {
+  71% {
     left: -100%;
     top: 100%;
-    opacity: 0.4;
+    opacity: 0.3;
   }
   100% {
     left: 100%;
@@ -494,9 +489,7 @@ a:focus-visible {
   .skeleton { animation: none; background: rgba(0,255,65,0.06); }
   .typing-text { width: auto !important; }
   .hologram-out {
-    opacity: 0;
     transform: none;
-    clip-path: none;
     filter: none;
   }
   .hologram-in {
