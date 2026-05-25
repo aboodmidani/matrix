@@ -24,22 +24,33 @@
       <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
 
         <!-- Hero -->
-        <section class="text-center mb-8 fade-in-up">
+        <section class="text-center mb-6 fade-in-up">
           <p class="text-xs tracking-[0.5em] uppercase mb-3" style="color: rgba(0,255,65,0.35);">
-            Web Security Assessment Platform
+            Web Security Assessment &amp; Vulnerability Scanner
           </p>
           <h1
-            class="text-5xl sm:text-6xl font-black mb-1 glow-green"
+            ref="heroTitleRef"
+            class="text-5xl sm:text-6xl font-black mb-1 glow-green typing-text"
             style="font-family: 'Orbitron', monospace; color: #00ff41; letter-spacing: 0.12em; line-height: 1;"
           >
-            MATRIX
+            MATRIX SCANNER
           </h1>
-          <h2
-            class="text-base sm:text-lg font-bold tracking-[0.6em] mb-4"
-            style="font-family: 'Orbitron', monospace; color: rgba(0,255,65,0.4);"
-          >
-            SCANNER
-          </h2>
+          <p class="text-xs sm:text-sm mb-4 tracking-wider max-w-xl mx-auto" style="color: rgba(0,255,65,0.45); line-height: 1.6;">
+            Online DNS lookup, port scanner, SSL checker, WAF detector, security headers analysis, technology fingerprinting, web crawler &amp; subdomain discovery — all in one free security audit tool.
+          </p>
+          <div class="flex items-center justify-center gap-6 mb-2">
+            <div class="flex items-center gap-2 text-xs" style="color: rgba(0,255,65,0.5);">
+              <span class="text-lg font-black count-up" ref="counterRef" style="color: #00ff41; font-family: 'Orbitron', monospace;">0</span>
+              <span>scans completed</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs" style="color: rgba(0,255,65,0.5);">
+              <span class="text-lg font-black" style="color: #00ff41; font-family: 'Orbitron', monospace;">11</span>
+              <span>security checks</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs" style="color: rgba(0,255,65,0.5);">
+              <span class="text-lg font-black" style="color: #00ff41; font-family: 'Orbitron', monospace;">Free</span>
+            </div>
+          </div>
           <div class="flex items-center justify-center gap-4">
             <div class="h-px flex-1 max-w-32" style="background: linear-gradient(90deg, transparent, rgba(0,255,65,0.3));"></div>
             <div class="flex gap-1.5">
@@ -74,10 +85,13 @@
                       style="color: rgba(0,255,65,0.4);"
                     >&#8250;</span>
                     <input
+                      ref="urlInputRef"
                       v-model="targetUrl"
                       type="text"
                       placeholder="https://target.com"
                       aria-label="Target URL to scan"
+                      aria-describedby="url-history-desc"
+                      autocomplete="off"
                       class="matrix-input w-full pl-9 pr-4 py-3 text-sm"
                       style="
                         background: rgba(0,8,2,0.9);
@@ -88,8 +102,18 @@
                       "
                       :style="urlError ? { borderColor: 'var(--matrix-red)' } : {}"
                       :disabled="scanState.isScanning"
+                      @focus="showHistory = true"
+                      @blur="showHistory = false"
                       @keyup.enter="start"
+                      @paste="onPaste"
                     />
+                    <UrlHistory
+                      v-if="showHistory && urlHistory.length"
+                      :history="urlHistory"
+                      @select="selectHistory"
+                      @remove="removeHistory"
+                    />
+                    <span id="url-history-desc" class="sr-only">Type or paste a URL. Recent URLs will appear below.</span>
                   </div>
                   <div class="flex gap-2">
                     <button
@@ -240,9 +264,17 @@
               </div>
             </Transition>
 
+            <!-- Skeleton placeholders during scan -->
+            <div v-if="scanState.isScanning" class="space-y-3 fade-in-up-stagger">
+              <SkeletonCard v-for="n in 4" :key="'skel-' + n" />
+            </div>
+
             <!-- Results -->
             <Transition name="fade">
-              <section v-if="scanState.done" class="space-y-3 fade-in-up">
+              <section v-if="scanState.done" class="space-y-3 fade-in-up-stagger">
+
+                <!-- Stats bar -->
+                <StatsBar :stats="scanStats" />
 
                 <!-- Results toolbar -->
                 <div class="matrix-card px-6 py-3 flex items-center justify-between gap-4">
@@ -263,6 +295,7 @@
                     <span class="text-xs hidden md:inline truncate" style="color: rgba(0,255,65,0.3);">{{ targetUrl }}</span>
                   </div>
                   <div class="flex items-center gap-2 flex-shrink-0">
+                    <ShareButton :url="targetUrl" :title="'Security scan results for ' + targetUrl" label="all results" />
                     <button @click="exportTxt(targetUrl, scans, SCAN_CONFIGS)" class="btn-matrix flex items-center gap-2 px-4 py-2 text-xs tracking-[0.15em] uppercase" style="background: rgba(0,255,65,0.06); border: 1px solid rgba(0,255,65,0.3); color: #00ff41; font-family: 'Orbitron', monospace; border-radius: 2px;" title="Download .txt report">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                       <span class="hidden sm:inline">TXT</span>
@@ -278,7 +311,7 @@
                 </div>
 
                 <!-- DNS -->
-                <ScanCard :config="SCAN_CONFIGS.dns" :scan="scans.dns" @rerun="rerunScan('dns')">
+                <ScanCard :config="SCAN_CONFIGS.dns" :scan="scans.dns" :targetUrl="targetUrl" @rerun="rerunScan('dns')">
                   <template #results="{ data }">
                     <div v-if="hasAnyRecord(data.records)" class="space-y-2">
                       <RecordGroup label="A Records (IPv4)"    :items="data.records?.A"    />
@@ -295,7 +328,7 @@
                 </ScanCard>
 
                 <!-- Ports -->
-                <ScanCard :config="SCAN_CONFIGS.ports" :scan="scans.ports" @rerun="rerunScan('ports')">
+                <ScanCard :config="SCAN_CONFIGS.ports" :scan="scans.ports" :targetUrl="targetUrl" @rerun="rerunScan('ports')">
                   <template #results="{ data }">
                     <div v-if="data.ports && data.ports.length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(255,215,0,0.5);">
@@ -320,7 +353,7 @@
                 </ScanCard>
 
                 <!-- Firewall -->
-                <ScanCard :config="SCAN_CONFIGS.firewall" :scan="scans.firewall" @rerun="rerunScan('firewall')">
+                <ScanCard :config="SCAN_CONFIGS.firewall" :scan="scans.firewall" :targetUrl="targetUrl" @rerun="rerunScan('firewall')">
                   <template #results="{ data }">
                     <div class="flex flex-wrap items-center gap-4">
                       <div class="flex items-center gap-2.5 px-4 py-2.5" style="border-radius: 2px;"
@@ -354,7 +387,7 @@
                 </ScanCard>
 
                 <!-- Technology -->
-                <ScanCard :config="SCAN_CONFIGS.technology" :scan="scans.technology" @rerun="rerunScan('technology')">
+                <ScanCard :config="SCAN_CONFIGS.technology" :scan="scans.technology" :targetUrl="targetUrl" @rerun="rerunScan('technology')">
                   <template #results="{ data }">
                     <div v-if="data.technologies && Object.keys(data.technologies).length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(191,0,255,0.5);">
@@ -376,7 +409,7 @@
                 </ScanCard>
 
                 <!-- Subdomains -->
-                <ScanCard :config="SCAN_CONFIGS.subdomains" :scan="scans.subdomains" @rerun="rerunScan('subdomains')">
+                <ScanCard :config="SCAN_CONFIGS.subdomains" :scan="scans.subdomains" :targetUrl="targetUrl" @rerun="rerunScan('subdomains')">
                   <template #results="{ data }">
                     <div v-if="data.subdomains && data.subdomains.length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(0,255,65,0.45);">
@@ -397,7 +430,7 @@
                 </ScanCard>
 
                 <!-- Live Status -->
-                <ScanCard :config="SCAN_CONFIGS.live" :scan="scans.live" @rerun="rerunScan('live')">
+                <ScanCard :config="SCAN_CONFIGS.live" :scan="scans.live" :targetUrl="targetUrl" @rerun="rerunScan('live')">
                   <template #results="{ data }">
                     <div class="flex flex-wrap items-center gap-4">
                       <div class="flex items-center gap-2.5 px-4 py-2.5" style="border-radius: 2px;"
@@ -433,7 +466,7 @@
                 </ScanCard>
 
                 <!-- SSL -->
-                <ScanCard :config="SCAN_CONFIGS.ssl" :scan="scans.ssl" @rerun="rerunScan('ssl')">
+                <ScanCard :config="SCAN_CONFIGS.ssl" :scan="scans.ssl" :targetUrl="targetUrl" @rerun="rerunScan('ssl')">
                   <template #results="{ data }">
                     <div v-if="data.ssl && data.ssl.certificate && data.ssl.certificate.subject">
                       <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -477,7 +510,7 @@
                 </ScanCard>
 
                 <!-- Security Headers -->
-                <ScanCard :config="SCAN_CONFIGS.headers" :scan="scans.headers" @rerun="rerunScan('headers')">
+                <ScanCard :config="SCAN_CONFIGS.headers" :scan="scans.headers" :targetUrl="targetUrl" @rerun="rerunScan('headers')">
                   <template #results="{ data }">
                     <div v-if="data.headers">
                       <div class="flex items-center gap-4 mb-4 text-sm">
@@ -514,7 +547,7 @@
                 </ScanCard>
 
                 <!-- Crawl -->
-                <ScanCard :config="SCAN_CONFIGS.crawl" :scan="scans.crawl" @rerun="rerunScan('crawl')">
+                <ScanCard :config="SCAN_CONFIGS.crawl" :scan="scans.crawl" :targetUrl="targetUrl" @rerun="rerunScan('crawl')">
                   <template #results="{ data }">
                     <div v-if="data.crawl">
                       <div class="flex flex-wrap gap-4 mb-4">
@@ -537,7 +570,7 @@
                 </ScanCard>
 
                 <!-- Directories -->
-                <ScanCard :config="SCAN_CONFIGS.directories" :scan="scans.directories" @rerun="rerunScan('directories')">
+                <ScanCard :config="SCAN_CONFIGS.directories" :scan="scans.directories" :targetUrl="targetUrl" @rerun="rerunScan('directories')">
                   <template #results="{ data }">
                     <div v-if="data.directories">
                       <p class="text-xs mb-3" style="color: rgba(0,255,65,0.45);">
@@ -564,7 +597,7 @@
                 </ScanCard>
 
                 <!-- DNS Extended -->
-                <ScanCard :config="SCAN_CONFIGS.dnsExtended" :scan="scans.dnsExtended" @rerun="rerunScan('dnsExtended')">
+                <ScanCard :config="SCAN_CONFIGS.dnsExtended" :scan="scans.dnsExtended" :targetUrl="targetUrl" @rerun="rerunScan('dnsExtended')">
                   <template #results="{ data }">
                     <div v-if="data.dns_extended">
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -607,16 +640,46 @@
       </main>
 
       <!-- Footer -->
-      <footer class="border-t py-4" style="border-color: rgba(0,255,65,0.08); background: rgba(0,0,0,0.5);">
-        <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p class="text-xs" style="color: rgba(0,255,65,0.7);">
-            MatrixScanner &mdash; For authorized use only
-          </p>
-          <div class="flex flex-wrap items-center gap-x-4 text-xs" style="color: rgba(0,255,65,0.5);">
-            <span>DNS &middot; Ports &middot; WAF &middot; Tech &middot; Subdomains</span>
-            <span class="hidden sm:inline">&middot;</span>
-            <span>SSL &middot; Headers &middot; Crawl &middot; Dirs &middot; DNS-X</span>
+      <footer class="border-t py-6" style="border-color: rgba(0,255,65,0.08); background: rgba(0,0,0,0.5);">
+        <div class="max-w-6xl mx-auto px-6">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+            <p class="text-xs" style="color: rgba(0,255,65,0.7);">
+              MatrixScanner &mdash; Free web security audit &amp; online vulnerability scanner
+            </p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" style="color: rgba(0,255,65,0.5);">
+              <span>DNS &middot; Ports &middot; WAF &middot; Tech &middot; Subdomains</span>
+              <span class="hidden sm:inline">&middot;</span>
+              <span>SSL &middot; Headers &middot; Crawl &middot; Dirs &middot; DNS-X</span>
+            </div>
           </div>
+          <div class="h-px mb-4" style="background: rgba(0,255,65,0.06);"></div>
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p class="text-xs" style="color: rgba(0,255,65,0.35);">
+              Built with security tools from
+              <a href="https://nmap.org/" target="_blank" rel="noopener" style="color: rgba(0,255,65,0.6);">Nmap</a>,
+              <a href="https://wafw00f.readthedocs.io/" target="_blank" rel="noopener" style="color: rgba(0,255,65,0.6);">wafw00f</a>,
+              <a href="https://www.dnsrecon.org/" target="_blank" rel="noopener" style="color: rgba(0,255,65,0.6);">dnsrecon</a>,
+              <a href="https://github.com/projectdiscovery/subfinder" target="_blank" rel="noopener" style="color: rgba(0,255,65,0.6);">Subfinder</a>,
+              <a href="https://github.com/OJ/gobuster" target="_blank" rel="noopener" style="color: rgba(0,255,65,0.6);">Gobuster</a>,
+              <a href="https://github.com/jaeles-project/gospider" target="_blank" rel="noopener" style="color: rgba(0,255,65,0.6);">Gospider</a>,
+              and <a href="https://www.cloudflare.com/" target="_blank" rel="noopener" style="color: rgba(0,255,65,0.6);">Cloudflare</a>.
+            </p>
+            <div class="flex items-center gap-4">
+              <a href="https://github.com/aboodmidani/matrix" target="_blank" rel="noopener" class="flex items-center gap-1.5 text-xs transition-colors" style="color: rgba(0,255,65,0.5);" :title="'Star on GitHub'">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Star on GitHub
+              </a>
+              <a href="https://github.com/aboodmidani/matrix/issues" target="_blank" rel="noopener" class="text-xs transition-colors" style="color: rgba(0,255,65,0.5);">
+                Report Issue
+              </a>
+              <a href="https://owasp.org/www-project-web-security-testing-guide/" target="_blank" rel="noopener" class="text-xs transition-colors" style="color: rgba(0,255,65,0.5);">
+                OWASP Guide
+              </a>
+            </div>
+          </div>
+          <p class="text-xs mt-4 text-center" style="color: rgba(0,255,65,0.2);">
+            For authorized security testing only. &copy; MatrixScanner
+          </p>
         </div>
       </footer>
 
@@ -625,26 +688,82 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import MatrixBackground   from '../components/MatrixBackground.vue'
 import DisclaimerCard     from '../components/DisclaimerCard.vue'
 import ScanCard           from '../components/ScanCard.vue'
 import RecordGroup        from '../components/RecordGroup.vue'
+import StatsBar           from '../components/StatsBar.vue'
+import ShareButton        from '../components/ShareButton.vue'
+import SkeletonCard       from '../components/SkeletonCard.vue'
+import UrlHistory from '../components/UrlHistory.vue'
+import { getUrlHistory, addUrlHistory } from '../utils/storage.js'
 import { scanState, scans, SCAN_CONFIGS, runAllScans, runSingleScan, stopScans, resetScans, getSavedState, restoreSavedScans } from '../composables/useScanner.js'
 import { exportTxt, exportJson }      from '../utils/exportReport.js'
+import { useScanResultMeta }          from '../composables/usePageMeta.js'
 
 const targetUrl    = ref('')
 const urlError     = ref('')
 const quickTargets = ['https://example.com', 'https://google.com', 'https://github.com', 'https://stackoverflow.com']
+const urlHistory   = ref([])
+const showHistory  = ref(false)
 
 const accepted = ref(false)
 function accept() { accepted.value = true }
+
+const urlInputRef   = ref(null)
+const heroTitleRef  = ref(null)
+const counterRef    = ref(null)
 
 const savedState = getSavedState()
 if (savedState) {
   accepted.value = true
   targetUrl.value = savedState.url || ''
   restoreSavedScans(savedState)
+}
+
+// Load URL history
+onMounted(() => {
+  urlHistory.value = getUrlHistory()
+  // Typing animation for hero title
+  if (heroTitleRef.value) {
+    const el = heroTitleRef.value
+    const text = el.textContent
+    el.style.width = '0'
+    el.textContent = ''
+    el.style.visibility = 'visible'
+    let i = 0
+    function typeChar() {
+      if (i < text.length) {
+        el.textContent += text[i]
+        el.style.width = (i + 1) + 'ch'
+        i++
+        setTimeout(typeChar, 60 + Math.random() * 40)
+      } else {
+        el.classList.add('typing-done')
+        startCounter()
+      }
+    }
+    setTimeout(typeChar, 500)
+  } else {
+    startCounter()
+  }
+})
+
+function startCounter() {
+  const el = counterRef.value
+  if (!el) return
+  const target = 10000
+  let current = 0
+  const step = Math.ceil(target / 60)
+  const interval = setInterval(() => {
+    current += step
+    if (current >= target) {
+      current = target
+      clearInterval(interval)
+    }
+    el.textContent = current.toLocaleString() + '+'
+  }, 30)
 }
 
 function validateUrl(url) {
@@ -662,11 +781,39 @@ function validateUrl(url) {
   }
 }
 
+function selectHistory(url) {
+  targetUrl.value = url
+  showHistory.value = false
+  start()
+}
+
+function removeHistory(index) {
+  const history = getUrlHistory()
+  history.splice(index, 1)
+  localStorage.setItem('ms-url-history', JSON.stringify(history))
+  urlHistory.value = getUrlHistory()
+}
+
+function onPaste(e) {
+  setTimeout(() => {
+    const val = targetUrl.value.trim()
+    if (val && !val.match(/^https?:\/\//)) {
+      targetUrl.value = 'https://' + val.replace(/^(?:https?:\/\/)?/, '')
+    }
+  }, 0)
+}
+
 async function start() {
   if (scanState.isScanning) return
   urlError.value = validateUrl(targetUrl.value)
   if (urlError.value) return
-  await runAllScans(targetUrl.value.trim())
+  const cleaned = targetUrl.value.trim()
+  addUrlHistory(cleaned)
+  urlHistory.value = getUrlHistory()
+  if (typeof window.gtag !== 'undefined') {
+    window.gtag('event', 'scan_started', { target_url: cleaned })
+  }
+  await runAllScans(cleaned)
 }
 
 function stop()  { stopScans() }
@@ -681,6 +828,36 @@ function hasAnyRecord(records) {
   if (!records) return false
   return Object.values(records).some(arr => Array.isArray(arr) && arr.length > 0)
 }
+
+// Dynamic page meta per scan results
+useScanResultMeta(targetUrl, scans)
+
+// Stats computation for StatsBar
+const scanStats = computed(() => {
+  const pass = Object.values(scans).filter(s => s.status === 'done').length
+  const error = Object.values(scans).filter(s => s.status === 'error').length
+  const scanning = Object.values(scans).filter(s => s.status === 'scanning').length
+  const total = Object.keys(SCAN_CONFIGS).length
+  return {
+    pass,
+    warn: scanning,
+    fail: error,
+    total,
+    duration: scanState.isScanning ? 'Scanning...' : (scanState.done ? 'Complete' : ''),
+  }
+})
+
+watch(() => scanState.isScanning, (scanning) => {
+  if (!scanning && scanState.done && typeof window.gtag !== 'undefined') {
+    const completed = Object.values(scans).filter(s => s.status === 'done').length
+    const errors = Object.values(scans).filter(s => s.status === 'error').length
+    window.gtag('event', 'scan_completed', {
+      target_url: targetUrl.value,
+      checks_completed: completed,
+      checks_failed: errors,
+    })
+  }
+})
 </script>
 
 <style scoped>

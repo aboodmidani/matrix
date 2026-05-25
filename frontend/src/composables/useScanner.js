@@ -101,6 +101,13 @@ async function _runScan(key, url, signal) {
     } else {
       scans[key].error  = err.message
       scans[key].status = 'error'
+      if (typeof window.gtag !== 'undefined') {
+        window.gtag('event', 'scan_error', {
+          scan_type: key,
+          target_url: url,
+          error: err.message,
+        })
+      }
     }
   }
 

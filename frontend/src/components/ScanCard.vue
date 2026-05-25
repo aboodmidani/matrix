@@ -25,6 +25,12 @@
       </div>
 
       <div class="flex items-center gap-2 flex-shrink-0">
+        <ShareButton
+          v-if="scan.status === 'done'"
+          :url="shareUrl"
+          :title="'Security scan: ' + config.label"
+          :label="config.label"
+        />
         <button
           v-if="scan.status === 'done' || scan.status === 'error'"
           @click.stop="$emit('rerun')"
@@ -83,13 +89,17 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import ShareButton from './ShareButton.vue'
 
 const props = defineProps({
   config: { type: Object, required: true },
   scan:   { type: Object, required: true },
+  targetUrl: { type: String, default: '' },
 })
 
 defineEmits(['rerun'])
+
+const shareUrl = computed(() => props.targetUrl || window.location.href)
 
 const open = ref(true)
 

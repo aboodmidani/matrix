@@ -182,6 +182,9 @@ export function exportTxt(targetUrl, scans, SCAN_CONFIGS) {
   a.download     = filename
   a.click()
   URL.revokeObjectURL(url)
+  if (typeof window.gtag !== 'undefined') {
+    window.gtag('event', 'report_download', { format: 'txt', target: targetUrl })
+  }
 }
 
 export function exportJson(targetUrl, scans, SCAN_CONFIGS) {
@@ -212,6 +215,9 @@ export function exportJson(targetUrl, scans, SCAN_CONFIGS) {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+  if (typeof window.gtag !== 'undefined') {
+    window.gtag('event', 'report_download', { format: 'json', target: targetUrl })
+  }
 }
 
 export async function copyToClipboard(text) {

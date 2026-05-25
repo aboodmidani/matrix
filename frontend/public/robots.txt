@@ -1,11 +1,7 @@
-# Robots.txt for Matrix Scanner
-# https://matrix-scanner.app/
+# Robots.txt for MatrixScanner
+# https://matrixscanner.app/
 
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://matrix-scanner.app/sitemap.xml
-
-# Crawl-delay (optional, be polite to servers)
-Crawl-delay: 1
+Sitemap: https://matrixscanner.app/sitemap.xml

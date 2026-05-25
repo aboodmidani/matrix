@@ -10,7 +10,11 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "vue": "^3.4.0"
+    "@unhead/vue": "^1.11.20",
+    "@vueuse/core": "^14.3.0",
+    "vite-plugin-sitemap": "^0.8.2",
+    "vue": "^3.4.0",
+    "vue-gtag": "^3.7.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
