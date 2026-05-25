@@ -60,12 +60,12 @@ import { ref } from 'vue'
 
 const emit = defineEmits(['accepted'])
 
-const overlayRef  = ref(null)
-const backdropRef = ref(null)
-const cardRef     = ref(null)
-const canvasRef   = ref(null)
-const cardHidden  = ref(false)
-const animating   = ref(false)
+  const overlayRef   = ref(null)
+  const backdropRef  = ref(null)
+  const cardRef      = ref(null)
+  const canvasRef    = ref(null)
+  const cardHidden   = ref(false)
+  const animating    = ref(false)
 
 // Matrix characters
 const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]|/\\!@#$%^&*'
@@ -74,20 +74,19 @@ function onAccept() {
   if (animating.value) return
   animating.value = true
 
-  const card    = cardRef.value
   const canvas  = canvasRef.value
   const overlay = overlayRef.value
   const backdrop = backdropRef.value
-  if (!card || !canvas || !overlay) { emit('accepted'); return }
-
-  const rect = card.getBoundingClientRect()
+  if (!canvas || !overlay) { emit('accepted'); return }
 
   canvas.width  = window.innerWidth
   canvas.height = window.innerHeight
+  const W = canvas.width
+  const H = canvas.height
   const ctx = canvas.getContext('2d')
 
   // ── Phase 1: Glitch flash (0–300ms) ──────────────────────────────────────
-  // Draw the card area with a bright green flash + horizontal glitch lines
+  // Draw full screen with a bright green flash + horizontal glitch lines
   let glitchStart = null
   const GLITCH_DURATION = 300
 
@@ -95,29 +94,29 @@ function onAccept() {
     if (!glitchStart) glitchStart = ts
     const t = (ts - glitchStart) / GLITCH_DURATION
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.clearRect(0, 0, W, H)
 
-    // Flicker the card area green
+    // Flicker full screen green
     const flashAlpha = Math.sin(t * Math.PI * 8) * 0.5 * (1 - t) + 0.1
     ctx.fillStyle = `rgba(0,255,65,${Math.max(0, flashAlpha)})`
-    ctx.fillRect(rect.left - 2, rect.top - 2, rect.width + 4, rect.height + 4)
+    ctx.fillRect(0, 0, W, H)
 
-    // Horizontal glitch slices
-    const numSlices = Math.floor(4 + Math.random() * 6)
+    // Horizontal glitch slices across full screen
+    const numSlices = Math.floor(6 + Math.random() * 8)
     for (let i = 0; i < numSlices; i++) {
-      const sliceY     = rect.top + Math.random() * rect.height
-      const sliceH     = 1 + Math.random() * 4
-      const sliceShift = (Math.random() - 0.5) * 20
-      const sliceAlpha = 0.3 + Math.random() * 0.5
+      const sliceY     = Math.random() * H
+      const sliceH     = 1 + Math.random() * 6
+      const sliceShift = (Math.random() - 0.5) * 30
+      const sliceAlpha = 0.2 + Math.random() * 0.6
       ctx.fillStyle = `rgba(0,255,65,${sliceAlpha})`
-      ctx.fillRect(rect.left + sliceShift, sliceY, rect.width, sliceH)
+      ctx.fillRect(sliceShift, sliceY, W, sliceH)
     }
 
     // Random bright scan lines across full width
-    if (Math.random() > 0.6) {
-      const scanY = rect.top + Math.random() * rect.height
-      ctx.fillStyle = 'rgba(0,255,200,0.15)'
-      ctx.fillRect(0, scanY, canvas.width, 1)
+    if (Math.random() > 0.5) {
+      const scanY = Math.random() * H
+      ctx.fillStyle = 'rgba(0,255,200,0.2)'
+      ctx.fillRect(0, scanY, W, 1)
     }
 
     if (t < 1) {
@@ -131,19 +130,19 @@ function onAccept() {
 
   requestAnimationFrame(glitchPhase)
 
-  // ── Phase 2: Matrix rain dissolution ─────────────────────────────────────
+  // ── Phase 2: Full-screen matrix rain dissolution ──────────────────────────
   function startRainPhase() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.clearRect(0, 0, W, H)
 
     const FONT_SIZE = 13
-    const cols = Math.ceil(rect.width / FONT_SIZE)
+    const cols = Math.ceil(W / FONT_SIZE)
 
-    // Each column: starts at top of card, falls down
+    // Each column: starts at top of screen, falls down
     const columns = Array.from({ length: cols }, (_, i) => ({
-      x:       rect.left + i * FONT_SIZE,
-      y:       rect.top,
+      x:       i * FONT_SIZE,
+      y:       0,
       speed:   0.4 + Math.random() * 1.2,
-      length:  Math.floor(rect.height / FONT_SIZE) + Math.floor(Math.random() * 8),
+      length:  Math.floor(H / FONT_SIZE) + Math.floor(Math.random() * 8),
       chars:   Array.from({ length: 30 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]),
       head:    0,
       delay:   Math.random() * 0.3,
@@ -167,7 +166,7 @@ function onAccept() {
 
       // Dim previous frame (trail effect)
       ctx.fillStyle = 'rgba(0,0,0,0.18)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillRect(0, 0, W, H)
 
       ctx.font = `${FONT_SIZE}px "Share Tech Mono", monospace`
 
@@ -192,8 +191,8 @@ function onAccept() {
         // Draw the column of characters
         const trailLen = Math.min(col.length, Math.floor(col.head))
         for (let j = 0; j < trailLen; j++) {
-          const charY = rect.top + (col.head - j) * FONT_SIZE
-          if (charY < rect.top - FONT_SIZE || charY > canvas.height + FONT_SIZE) continue
+          const charY = (col.head - j) * FONT_SIZE
+          if (charY < -FONT_SIZE || charY > H + FONT_SIZE) continue
 
           const charIdx = j % col.chars.length
           const char    = col.chars[charIdx]
@@ -221,7 +220,7 @@ function onAccept() {
           if (!fadeStart) fadeStart = ts
           const t = (ts - fadeStart) / 400
           ctx.fillStyle = `rgba(0,0,0,${Math.min(t * 0.3, 0.3)})`
-          ctx.fillRect(0, 0, canvas.width, canvas.height)
+          ctx.fillRect(0, 0, W, H)
           if (t < 1) {
             requestAnimationFrame(fadeOut)
           } else {
