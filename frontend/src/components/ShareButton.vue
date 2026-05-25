@@ -2,7 +2,7 @@
   <div class="relative inline-flex">
     <button
       @click="toggle"
-      class="flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors duration-150"
+      class="flex items-center gap-1.5 px-3 py-1.5 text-xs transition-all duration-200"
       :style="{
         color: 'rgba(0,255,65,0.5)',
         border: '1px solid rgba(0,255,65,0.2)',
@@ -27,13 +27,13 @@
         borderRadius: '2px',
       }"
     >
-      <button @click="share('twitter')" class="px-2 py-1 text-xs transition-colors" style="color: rgba(0,255,65,0.6);" :title="'Share on X'">
+      <button @click="share('twitter')" class="px-2 py-1 text-xs transition-colors hover:brightness-125" style="color: rgba(0,255,65,0.6);" :title="'Share on X'">
         X
       </button>
-      <button @click="share('linkedin')" class="px-2 py-1 text-xs transition-colors" style="color: rgba(0,255,65,0.6);" :title="'Share on LinkedIn'">
+      <button @click="share('linkedin')" class="px-2 py-1 text-xs transition-colors hover:brightness-125" style="color: rgba(0,255,65,0.6);" :title="'Share on LinkedIn'">
         in
       </button>
-      <button @click="share('email')" class="px-2 py-1 text-xs transition-colors" style="color: rgba(0,255,65,0.6);" :title="'Share via Email'">
+      <button @click="share('email')" class="px-2 py-1 text-xs transition-colors hover:brightness-125" style="color: rgba(0,255,65,0.6);" :title="'Share via Email'">
         @
       </button>
     </div>

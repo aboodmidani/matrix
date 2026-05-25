@@ -5,7 +5,12 @@
     <div class="relative z-10 min-h-screen flex flex-col">
 
       <!-- Top bar -->
-      <header class="border-b" style="border-color: rgba(0,255,65,0.1); background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);">
+      <header
+        ref="headerRef"
+        class="border-b"
+        :class="headerRevealed ? 'hologram-in' : 'hologram-out'"
+        style="border-color: rgba(0,255,65,0.1); background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);"
+      >
         <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-2 h-2 rounded-full" style="background: #00ff41; box-shadow: 0 0 8px #00ff41;"></div>
@@ -24,7 +29,11 @@
       <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
 
         <!-- Hero -->
-        <section class="text-center mb-6 fade-in-up">
+        <section
+          ref="heroRef"
+          class="text-center mb-6"
+          :class="heroRevealed ? 'hologram-in' : 'hologram-out'"
+        >
           <p class="text-xs tracking-[0.5em] uppercase mb-3" style="color: rgba(0,255,65,0.35);">
             Web Security Assessment &amp; Vulnerability Scanner
           </p>
@@ -70,7 +79,11 @@
           <section v-if="accepted">
 
             <!-- Input card -->
-            <div class="matrix-card bracket-corners mb-4">
+            <div
+              ref="inputCardRef"
+              class="matrix-card bracket-corners mb-4"
+              :class="inputCardRevealed ? 'hologram-in hologram-stagger-2' : 'hologram-out'"
+            >
               <div class="px-6 pt-5 pb-3 border-b" style="border-color: rgba(0,255,65,0.08);">
                 <div class="flex items-center gap-2">
                   <span class="w-1.5 h-1.5 rounded-full" style="background: #00ff41;"></span>
@@ -265,19 +278,23 @@
             </Transition>
 
             <!-- Skeleton placeholders during scan -->
-            <div v-if="scanState.isScanning" class="space-y-3 fade-in-up-stagger">
+            <div v-if="scanState.isScanning" class="space-y-3 hologram-stagger">
               <SkeletonCard v-for="n in 4" :key="'skel-' + n" />
             </div>
 
             <!-- Results -->
             <Transition name="fade">
-              <section v-if="scanState.done" class="space-y-3 fade-in-up-stagger">
+              <section v-if="scanState.done" class="space-y-3">
 
                 <!-- Stats bar -->
                 <StatsBar :stats="scanStats" />
 
                 <!-- Results toolbar -->
-                <div class="matrix-card px-6 py-3 flex items-center justify-between gap-4">
+                <div
+                  ref="toolbarRef"
+                  class="matrix-card px-6 py-3 flex items-center justify-between gap-4"
+                  :class="toolbarRevealed ? 'hologram-in hologram-stagger-2' : 'hologram-out'"
+                >
                   <div class="flex items-center gap-3 min-w-0">
                     <div
                       class="w-2 h-2 rounded-full flex-shrink-0"
@@ -311,7 +328,7 @@
                 </div>
 
                 <!-- DNS -->
-                <ScanCard :config="SCAN_CONFIGS.dns" :scan="scans.dns" :targetUrl="targetUrl" @rerun="rerunScan('dns')">
+                <ScanCard :config="SCAN_CONFIGS.dns" :scan="scans.dns" :targetUrl="targetUrl" :revealDelay="0" @rerun="rerunScan('dns')">
                   <template #results="{ data }">
                     <div v-if="hasAnyRecord(data.records)" class="space-y-2">
                       <RecordGroup label="A Records (IPv4)"    :items="data.records?.A"    />
@@ -328,7 +345,7 @@
                 </ScanCard>
 
                 <!-- Ports -->
-                <ScanCard :config="SCAN_CONFIGS.ports" :scan="scans.ports" :targetUrl="targetUrl" @rerun="rerunScan('ports')">
+                <ScanCard :config="SCAN_CONFIGS.ports" :scan="scans.ports" :targetUrl="targetUrl" :revealDelay="40" @rerun="rerunScan('ports')">
                   <template #results="{ data }">
                     <div v-if="data.ports && data.ports.length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(255,215,0,0.5);">
@@ -353,7 +370,7 @@
                 </ScanCard>
 
                 <!-- Firewall -->
-                <ScanCard :config="SCAN_CONFIGS.firewall" :scan="scans.firewall" :targetUrl="targetUrl" @rerun="rerunScan('firewall')">
+                <ScanCard :config="SCAN_CONFIGS.firewall" :scan="scans.firewall" :targetUrl="targetUrl" :revealDelay="80" @rerun="rerunScan('firewall')">
                   <template #results="{ data }">
                     <div class="flex flex-wrap items-center gap-4">
                       <div class="flex items-center gap-2.5 px-4 py-2.5" style="border-radius: 2px;"
@@ -387,7 +404,7 @@
                 </ScanCard>
 
                 <!-- Technology -->
-                <ScanCard :config="SCAN_CONFIGS.technology" :scan="scans.technology" :targetUrl="targetUrl" @rerun="rerunScan('technology')">
+                <ScanCard :config="SCAN_CONFIGS.technology" :scan="scans.technology" :targetUrl="targetUrl" :revealDelay="120" @rerun="rerunScan('technology')">
                   <template #results="{ data }">
                     <div v-if="data.technologies && Object.keys(data.technologies).length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(191,0,255,0.5);">
@@ -409,7 +426,7 @@
                 </ScanCard>
 
                 <!-- Subdomains -->
-                <ScanCard :config="SCAN_CONFIGS.subdomains" :scan="scans.subdomains" :targetUrl="targetUrl" @rerun="rerunScan('subdomains')">
+                <ScanCard :config="SCAN_CONFIGS.subdomains" :scan="scans.subdomains" :targetUrl="targetUrl" :revealDelay="160" @rerun="rerunScan('subdomains')">
                   <template #results="{ data }">
                     <div v-if="data.subdomains && data.subdomains.length">
                       <p class="text-xs mb-3 tracking-widest uppercase" style="color: rgba(0,255,65,0.45);">
@@ -430,7 +447,7 @@
                 </ScanCard>
 
                 <!-- Live Status -->
-                <ScanCard :config="SCAN_CONFIGS.live" :scan="scans.live" :targetUrl="targetUrl" @rerun="rerunScan('live')">
+                <ScanCard :config="SCAN_CONFIGS.live" :scan="scans.live" :targetUrl="targetUrl" :revealDelay="200" @rerun="rerunScan('live')">
                   <template #results="{ data }">
                     <div class="flex flex-wrap items-center gap-4">
                       <div class="flex items-center gap-2.5 px-4 py-2.5" style="border-radius: 2px;"
@@ -466,7 +483,7 @@
                 </ScanCard>
 
                 <!-- SSL -->
-                <ScanCard :config="SCAN_CONFIGS.ssl" :scan="scans.ssl" :targetUrl="targetUrl" @rerun="rerunScan('ssl')">
+                <ScanCard :config="SCAN_CONFIGS.ssl" :scan="scans.ssl" :targetUrl="targetUrl" :revealDelay="240" @rerun="rerunScan('ssl')">
                   <template #results="{ data }">
                     <div v-if="data.ssl && data.ssl.certificate && data.ssl.certificate.subject">
                       <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -510,7 +527,7 @@
                 </ScanCard>
 
                 <!-- Security Headers -->
-                <ScanCard :config="SCAN_CONFIGS.headers" :scan="scans.headers" :targetUrl="targetUrl" @rerun="rerunScan('headers')">
+                <ScanCard :config="SCAN_CONFIGS.headers" :scan="scans.headers" :targetUrl="targetUrl" :revealDelay="280" @rerun="rerunScan('headers')">
                   <template #results="{ data }">
                     <div v-if="data.headers">
                       <div class="flex items-center gap-4 mb-4 text-sm">
@@ -547,7 +564,7 @@
                 </ScanCard>
 
                 <!-- Crawl -->
-                <ScanCard :config="SCAN_CONFIGS.crawl" :scan="scans.crawl" :targetUrl="targetUrl" @rerun="rerunScan('crawl')">
+                <ScanCard :config="SCAN_CONFIGS.crawl" :scan="scans.crawl" :targetUrl="targetUrl" :revealDelay="320" @rerun="rerunScan('crawl')">
                   <template #results="{ data }">
                     <div v-if="data.crawl">
                       <div class="flex flex-wrap gap-4 mb-4">
@@ -570,7 +587,7 @@
                 </ScanCard>
 
                 <!-- Directories -->
-                <ScanCard :config="SCAN_CONFIGS.directories" :scan="scans.directories" :targetUrl="targetUrl" @rerun="rerunScan('directories')">
+                <ScanCard :config="SCAN_CONFIGS.directories" :scan="scans.directories" :targetUrl="targetUrl" :revealDelay="360" @rerun="rerunScan('directories')">
                   <template #results="{ data }">
                     <div v-if="data.directories">
                       <p class="text-xs mb-3" style="color: rgba(0,255,65,0.45);">
@@ -597,7 +614,7 @@
                 </ScanCard>
 
                 <!-- DNS Extended -->
-                <ScanCard :config="SCAN_CONFIGS.dnsExtended" :scan="scans.dnsExtended" :targetUrl="targetUrl" @rerun="rerunScan('dnsExtended')">
+                <ScanCard :config="SCAN_CONFIGS.dnsExtended" :scan="scans.dnsExtended" :targetUrl="targetUrl" :revealDelay="400" @rerun="rerunScan('dnsExtended')">
                   <template #results="{ data }">
                     <div v-if="data.dns_extended">
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -640,7 +657,12 @@
       </main>
 
       <!-- Footer -->
-      <footer class="border-t py-6" style="border-color: rgba(0,255,65,0.08); background: rgba(0,0,0,0.5);">
+      <footer
+        ref="footerRef"
+        class="border-t py-6"
+        :class="footerRevealed ? 'hologram-in' : 'hologram-out'"
+        style="border-color: rgba(0,255,65,0.08); background: rgba(0,0,0,0.5);"
+      >
         <div class="max-w-6xl mx-auto px-6">
           <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <p class="text-xs" style="color: rgba(0,255,65,0.7);">
@@ -701,6 +723,7 @@ import { getUrlHistory, addUrlHistory } from '../utils/storage.js'
 import { scanState, scans, SCAN_CONFIGS, runAllScans, runSingleScan, stopScans, resetScans, getSavedState, restoreSavedScans } from '../composables/useScanner.js'
 import { exportTxt, exportJson }      from '../utils/exportReport.js'
 import { useScanResultMeta }          from '../composables/usePageMeta.js'
+import { useReveal }                  from '../composables/useReveal.js'
 
 const targetUrl    = ref('')
 const urlError     = ref('')
@@ -721,6 +744,12 @@ if (savedState) {
   targetUrl.value = savedState.url || ''
   restoreSavedScans(savedState)
 }
+
+const { elementRef: headerRef, isRevealed: headerRevealed } = useReveal({ delay: 0, threshold: 0.01 })
+const { elementRef: heroRef, isRevealed: heroRevealed } = useReveal({ delay: 80, threshold: 0.01 })
+const { elementRef: inputCardRef, isRevealed: inputCardRevealed } = useReveal({ delay: 120, threshold: 0.05 })
+const { elementRef: toolbarRef, isRevealed: toolbarRevealed } = useReveal({ delay: 100, threshold: 0.05 })
+const { elementRef: footerRef, isRevealed: footerRevealed } = useReveal({ delay: 60, threshold: 0.05 })
 
 // Load URL history
 onMounted(() => {
@@ -744,7 +773,7 @@ onMounted(() => {
         startCounter()
       }
     }
-    setTimeout(typeChar, 500)
+    setTimeout(typeChar, 550)
   } else {
     startCounter()
   }

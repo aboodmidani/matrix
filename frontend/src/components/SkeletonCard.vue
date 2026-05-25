@@ -1,5 +1,5 @@
 <template>
-  <div class="matrix-card rounded-none overflow-hidden">
+  <div class="matrix-card rounded-none overflow-hidden" :class="isRevealed ? 'hologram-in' : 'hologram-out'">
     <div class="h-px w-full" :style="{ background: 'linear-gradient(90deg, transparent, rgba(0,255,65,0.3), transparent)' }"></div>
     <div class="px-5 py-4">
       <div class="flex items-center gap-3 mb-4">
@@ -16,3 +16,9 @@
     <div class="h-px w-full" :style="{ background: 'linear-gradient(90deg, transparent, rgba(0,255,65,0.15), transparent)' }"></div>
   </div>
 </template>
+
+<script setup>
+import { useReveal } from '../composables/useReveal.js'
+
+const { elementRef, isRevealed } = useReveal({ threshold: 0.05 })
+</script>

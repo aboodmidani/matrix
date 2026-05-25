@@ -1,5 +1,10 @@
 <template>
-  <div class="matrix-card rounded-none fade-in-up" :style="cardStyle">
+  <div
+    ref="cardRef"
+    class="matrix-card rounded-none"
+    :class="isRevealed ? 'hologram-in' : 'hologram-out'"
+    :style="cardStyle"
+  >
     <div class="h-px w-full" :style="{ background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }"></div>
 
     <button
@@ -90,11 +95,13 @@
 <script setup>
 import { ref, computed } from 'vue'
 import ShareButton from './ShareButton.vue'
+import { useReveal } from '../composables/useReveal.js'
 
 const props = defineProps({
   config: { type: Object, required: true },
   scan:   { type: Object, required: true },
   targetUrl: { type: String, default: '' },
+  revealDelay: { type: Number, default: 0 },
 })
 
 defineEmits(['rerun'])
@@ -102,6 +109,8 @@ defineEmits(['rerun'])
 const shareUrl = computed(() => props.targetUrl || window.location.href)
 
 const open = ref(true)
+
+const { elementRef: cardRef, isRevealed } = useReveal({ delay: props.revealDelay, threshold: 0.08 })
 
 const COLOR_MAP = {
   blue:   { hex: '#00bfff', rgb: '0,191,255' },
