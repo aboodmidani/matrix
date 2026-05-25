@@ -1,5 +1,5 @@
 import { useHead, useSeoMeta } from '@unhead/vue'
-import { computed } from 'vue'
+import { computed, unref } from 'vue'
 import { SITE_NAME, SITE_URL, SITE_DESCRIPTION, OG_IMAGE, TWITTER_HANDLE } from '../utils/keywords.js'
 
 export function usePageMeta(options = {}) {
@@ -42,21 +42,23 @@ export function useScanResultMeta(targetUrl, scanResults) {
   })
 
   const scanTitle = computed(() => {
-    if (!targetUrl) return SITE_NAME
-    const host = targetUrl.replace(/https?:\/\//, '').replace(/\/.*$/, '')
+    const url = unref(targetUrl)
+    if (!url) return SITE_NAME
+    const host = url.replace(/https?:\/\//, '').replace(/\/.*$/, '')
     return `${host} — Security Scan Results | ${SITE_NAME}`
   })
 
   const scanDescription = computed(() => {
+    const url = unref(targetUrl)
     if (!hasResults.value) return SITE_DESCRIPTION
     const done = Object.values(scanResults).filter(s => s.status === 'done')
-    return `Security scan results for ${targetUrl}: ${done.length} checks completed including DNS, ports, SSL, headers, and more. ${SITE_NAME} web vulnerability assessment.`
+    return `Security scan results for ${url}: ${done.length} checks completed including DNS, ports, SSL, headers, and more. ${SITE_NAME} web vulnerability assessment.`
   })
 
   usePageMeta({
     title: scanTitle.value,
     description: scanDescription.value,
-    url: targetUrl || SITE_URL,
+    url: unref(targetUrl) || SITE_URL,
     keywords: 'security scan results, website audit, vulnerability report',
   })
 
